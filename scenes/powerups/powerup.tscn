@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/powerups/powerup.gd" id="2_script"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
-radius = 10.0
+radius = 18.0
 
 [node name="Powerup" type="Area2D"]
 collision_layer = 16

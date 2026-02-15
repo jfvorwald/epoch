@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/projectiles/player_bullet.gd" id="2_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
-size = Vector2(6, 14)
+size = Vector2(12, 28)
 
 [node name="PlayerBullet" type="Area2D"]
 collision_layer = 4

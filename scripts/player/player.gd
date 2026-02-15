@@ -36,8 +36,8 @@ func _process(delta: float) -> void:
 	var viewport_rect := get_viewport_rect()
 
 	var new_pos := global_position.lerp(target, speed * delta / 100.0)
-	new_pos.x = clampf(new_pos.x, 32, viewport_rect.size.x - 32)
-	new_pos.y = clampf(new_pos.y, 32, viewport_rect.size.y - 32)
+	new_pos.x = clampf(new_pos.x, 64, viewport_rect.size.x - 64)
+	new_pos.y = clampf(new_pos.y, 64, viewport_rect.size.y - 64)
 	global_position = new_pos
 
 	if can_fire:
@@ -47,14 +47,14 @@ func fire() -> void:
 	can_fire = false
 
 	if spread == 1:
-		spawn_bullet(Vector2(0, -30), 0.0)
+		spawn_bullet(Vector2(0, -60), 0.0)
 	elif spread == 2:
-		spawn_bullet(Vector2(-10, -30), -0.1)
-		spawn_bullet(Vector2(10, -30), 0.1)
+		spawn_bullet(Vector2(-20, -55), -0.1)
+		spawn_bullet(Vector2(20, -55), 0.1)
 	else:
-		spawn_bullet(Vector2(-16, -26), -0.2)
-		spawn_bullet(Vector2(0, -30), 0.0)
-		spawn_bullet(Vector2(16, -26), 0.2)
+		spawn_bullet(Vector2(-30, -50), -0.2)
+		spawn_bullet(Vector2(0, -60), 0.0)
+		spawn_bullet(Vector2(30, -50), 0.2)
 
 	var actual_rate := base_fire_rate * fire_rate_mult
 	await get_tree().create_timer(actual_rate).timeout

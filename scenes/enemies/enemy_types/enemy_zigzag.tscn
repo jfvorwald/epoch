@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/enemies/base_enemy.gd" id="2_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
-size = Vector2(28, 28)
+size = Vector2(50, 50)
 
 [node name="EnemyZigzag" type="Area2D"]
 monitoring = true

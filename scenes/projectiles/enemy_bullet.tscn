@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/projectiles/enemy_bullet.gd" id="2_script"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
-radius = 6.0
+radius = 10.0
 
 [node name="EnemyBullet" type="Area2D"]
 monitoring = true
