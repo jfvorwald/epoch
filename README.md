@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/sprites/ui/icon.png" alt="Epoch" width="200">
+</p>
+
 # EPOCH
 
 **A post-Soviet retro gundam-style mobile shooter by Ball Soft.**
