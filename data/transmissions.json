@@ -1,0 +1,68 @@
+{
+  "transmissions": [
+    {
+      "id": "t001",
+      "sender": "CMDR. VOLKOV",
+      "text": "Voss... if you can hear this... the signal came from beyond the static wall. They're not what we thought they were. The machines remember everything.",
+      "min_level": 1,
+      "max_level": 15,
+      "weight": 2.0
+    },
+    {
+      "id": "t002",
+      "sender": "STATION MIRNY-7",
+      "text": "Automated defense grid activated. All sectors report hostile contact. Epoch protocol is now in effect. There is no retreat.",
+      "min_level": 1,
+      "max_level": 30,
+      "weight": 1.5
+    },
+    {
+      "id": "t003",
+      "sender": "UNKNOWN",
+      "text": "01001000 01000101 01001100 01010000... They decoded it as 'HELP' but it was sent from the future. From us. From what we become.",
+      "min_level": 5,
+      "max_level": 50,
+      "weight": 1.0
+    },
+    {
+      "id": "t004",
+      "sender": "DR. KALININA",
+      "text": "The Scrotum Engine is operating beyond theoretical limits. The gravitational harmonics... they're not random. Someone is playing them like an instrument.",
+      "min_level": 10,
+      "max_level": 60,
+      "weight": 1.0
+    },
+    {
+      "id": "t005",
+      "sender": "PILOT VOSS (ECHO)",
+      "text": "This is Voss from Epoch 3. Do not trust the transmissions. Do not trust this one. Keep flying. The only way out is through.",
+      "min_level": 15,
+      "max_level": 100,
+      "weight": 0.8
+    },
+    {
+      "id": "t006",
+      "sender": "COSMONAUT MEMORIAL FREQ.",
+      "text": "In memory of those who reached the edge and chose to look. The stars did not blink. The stars stared back.",
+      "min_level": 1,
+      "max_level": 100,
+      "weight": 0.5
+    },
+    {
+      "id": "t007",
+      "sender": "CMDR. VOLKOV",
+      "text": "We found the first one buried in the permafrost. A machine older than language. It was already running. It had been running since January 1st, 1970.",
+      "min_level": 20,
+      "max_level": 100,
+      "weight": 1.0
+    },
+    {
+      "id": "t008",
+      "sender": "BALL SOFT INTERNAL",
+      "text": "BUILD NOTE: If player reaches this level, physics engine is holding. Increase scrotum coefficient by 0.3 and monitor for oscillation.",
+      "min_level": 30,
+      "max_level": 100,
+      "weight": 0.3
+    }
+  ]
+}

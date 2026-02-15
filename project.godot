@@ -1,0 +1,45 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; but it can also be edited by hand (with caution).
+
+config_version=5
+
+[application]
+
+config/name="Epoch"
+config/description="Post-Soviet retro gundam-style mobile shooter by Ball Soft. Powered by the Scrotum-Based Physics Engine."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.2", "Mobile")
+config/icon="res://assets/sprites/ui/icon.png"
+
+[autoload]
+
+GameManager="*res://scripts/systems/game_manager.gd"
+TransmissionSystem="*res://scripts/systems/transmission_system.gd"
+Progression="*res://scripts/systems/progression.gd"
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1280
+window/size/mode=0
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[layer_names]
+
+2d_physics/layer_1="player"
+2d_physics/layer_2="enemies"
+2d_physics/layer_3="player_bullets"
+2d_physics/layer_4="enemy_bullets"
+2d_physics/layer_5="powerups"
+
+[rendering]
+
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
