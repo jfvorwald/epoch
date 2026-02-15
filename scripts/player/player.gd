@@ -14,6 +14,14 @@ var damage: int = 1
 var spread: int = 1               # Number of bullet streams (1, 2, 3)
 var buff_duration: float = 8.0
 
+# Ship upgrade
+var ship_textures: Array = [
+	preload("res://assets/sprites/player/player_era1_base.png"),
+	preload("res://assets/sprites/player/player_era1_upgraded.png"),
+]
+var current_ship_tier: int = 0
+var upgrade_at_level: int = 10
+
 signal hp_changed(new_hp: int, max_hp: int)
 signal player_died
 
@@ -116,6 +124,14 @@ func heal(amount: int = 1) -> void:
 	hp = min(hp + amount, max_hp)
 	emit_signal("hp_changed", hp, max_hp)
 
+func check_ship_upgrade() -> void:
+	var tier := 0
+	if Progression.current_level >= upgrade_at_level:
+		tier = 1
+	if tier != current_ship_tier and tier < ship_textures.size():
+		current_ship_tier = tier
+		$Sprite2D.texture = ship_textures[tier]
+
 func reset() -> void:
 	hp = max_hp
 	modulate = Color(1, 1, 1, 1)
@@ -124,6 +140,7 @@ func reset() -> void:
 	fire_rate_mult = 1.0
 	damage = 1
 	spread = 1
+	check_ship_upgrade()
 	emit_signal("hp_changed", hp, max_hp)
 
 func _on_area_entered(area: Area2D) -> void:
