@@ -4,9 +4,9 @@
 
 # EPOCH
 
-**A post-Soviet retro gundam-style mobile shooter by Ball Soft.**
+**A post-Soviet retro gundam-style mobile shooter by Mirny Interactive.**
 
-Powered by the Scrotum-Based Physics Engine.
+Powered by the Strelka Engine.
 
 ---
 

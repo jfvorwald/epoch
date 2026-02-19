@@ -1,8 +1,8 @@
 # Epoch - Design Document & Project Conventions
 
 ## Overview
-**Epoch** by **Ball Soft** - a post-Soviet retro gundam-style mobile vertical shooter.
-Powered by the **Scrotum-Based Physics Engine**.
+**Epoch** by **Mirny Interactive** - a post-Soviet retro gundam-style mobile vertical shooter.
+Powered by the **Strelka Engine**.
 
 The name "Epoch" references:
 1. Unix epoch (Jan 1, 1970) - the start of computer time
@@ -41,7 +41,7 @@ The name "Epoch" references:
 - Appear every 3 levels
 - Weighted random selection from pool
 - Level-gated (some only appear at certain level ranges)
-- Story fragments about machines, time, signals, the Scrotum Engine
+- Story fragments about machines, time, signals, the Strelka Engine
 - Displayed as full-screen overlay with dismiss button
 
 ## Project Conventions

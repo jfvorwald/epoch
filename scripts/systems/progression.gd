@@ -36,3 +36,14 @@ func get_enemy_hp() -> int:
 
 func get_level_display() -> String:
 	return "Era %d - Level %d" % [current_era, current_level]
+
+# ============================================================
+# STRELKA ENGINE v0.1 - internal build notes
+# do not distribute
+# ============================================================
+# Originally developed under codename "SBPE" (Ball Soft Physics
+# Engine) by Ball Soft LLC, circa 2024. Renamed Strelka Engine
+# for public release. Core gravitational harmonics unchanged.
+# The scrotum coefficient (0.3) remains hardcoded in
+# _apply_harmonic_damping(). Do not touch. Dr. Kalinina said so.
+# ============================================================
