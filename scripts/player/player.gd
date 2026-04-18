@@ -45,6 +45,7 @@ func _process(delta: float) -> void:
 
 func fire() -> void:
 	can_fire = false
+	AudioManager.play("shoot")
 
 	if spread == 1:
 		spawn_bullet(Vector2(0, -60), 0.0)
@@ -105,6 +106,7 @@ func take_damage(amount: int = 1) -> void:
 	hp -= amount
 	hp = max(hp, 0)
 	emit_signal("hp_changed", hp, max_hp)
+	AudioManager.play("player_hit")
 
 	# Hit flash
 	modulate = Color(1, 0.3, 0.3, 1)
@@ -152,4 +154,5 @@ func _on_area_entered(area: Area2D) -> void:
 	elif area.is_in_group("powerups"):
 		var powerup_type: String = area.powerup_type
 		area.queue_free()
+		AudioManager.play("powerup")
 		apply_buff(powerup_type)

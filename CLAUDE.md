@@ -97,6 +97,7 @@ All sprites are loaded by path from `assets/sprites/`. To swap art:
 - **GameManager** - game state machine (MENU, PLAYING, BETWEEN_LEVELS, GAME_OVER), score tracking
 - **Progression** - level/era tracking, difficulty scaling, HP calculations
 - **TransmissionSystem** - loads transmission JSON, selects by level/weight, emits signals
+- **AudioManager** - procedurally generated SFX, BGM player (drop bgm.ogg/wav/mp3 in assets/audio/)
 
 ### Signal Flow
 ```
@@ -115,7 +116,8 @@ TransmissionSystem.show_transmission → TransmissionPopup._on_show_transmission
 - Gear/loot drops from enemies
 - Power-up gameplay (shield, spread shot, etc.)
 - Pay-to-win shop (the monetization satire angle)
-- Audio (chiptune meets Soviet synth)
+- Audio: background music (placeholder ready, drop file in assets/audio/bgm.ogg)
+- Audio: replace procedural SFX with final produced sounds
 - Multiple eras of transmissions revealing full story
 - Boss enemies at level milestones
 - Leaderboards
