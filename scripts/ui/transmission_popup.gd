@@ -12,6 +12,7 @@ func _ready() -> void:
 		dismiss_button.pressed.connect(_on_dismiss)
 
 func _on_show_transmission(text: String, sender: String) -> void:
+	AudioManager.play("transmission")
 	if sender_label:
 		sender_label.text = "[INTERCEPTED TRANSMISSION - %s]" % sender
 	if text_label:

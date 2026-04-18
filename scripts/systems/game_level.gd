@@ -50,6 +50,7 @@ func _on_player_died() -> void:
 func _on_wave_complete() -> void:
 	if not is_inside_tree():
 		return
+	AudioManager.play("level_complete")
 	hud.show_level_complete()
 	var timer := get_tree().create_timer(1.5)
 	await timer.timeout

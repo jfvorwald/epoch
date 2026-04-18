@@ -94,6 +94,7 @@ func take_damage(amount: int = 1) -> void:
 	if not is_inside_tree():
 		return
 	if hp <= 0:
+		AudioManager.play("enemy_destroy")
 		emit_signal("enemy_destroyed", score_value)
 		try_drop_powerup()
 		queue_free()

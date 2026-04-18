@@ -33,6 +33,7 @@ func level_complete() -> void:
 	change_state(GameState.PLAYING)
 
 func game_over() -> void:
+	AudioManager.play("game_over")
 	change_state(GameState.GAME_OVER)
 
 func restart() -> void:
