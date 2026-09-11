@@ -17,3 +17,15 @@ Thumbs.db
 # IDE
 .vscode/
 *.code-workspace
+
+# Browser rewrite
+node_modules/
+dist/
+test-results/
+playwright-report/
+.sites-runtime/
+.pnpm-store/
+.wrangler/
+.dev.vars
+.env
+.env.local

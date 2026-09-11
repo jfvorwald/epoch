@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 200" fill="none">
+  <defs>
+    <linearGradient id="hull" x1="43" y1="42" x2="124" y2="166" gradientUnits="userSpaceOnUse"><stop stop-color="#f4eddb"/><stop offset=".35" stop-color="#c4d2d6"/><stop offset=".7" stop-color="#7e98ac"/><stop offset="1" stop-color="#c3cac4"/></linearGradient>
+    <linearGradient id="wing" x1="17" y1="82" x2="71" y2="151" gradientUnits="userSpaceOnUse"><stop stop-color="#dce3db"/><stop offset=".6" stop-color="#859eac"/><stop offset="1" stop-color="#40566d"/></linearGradient>
+    <linearGradient id="steel" x1="60" y1="42" x2="94" y2="172" gradientUnits="userSpaceOnUse"><stop stop-color="#5b7187"/><stop offset=".4" stop-color="#29374d"/><stop offset="1" stop-color="#111b30"/></linearGradient>
+    <linearGradient id="glass" x1="74" y1="58" x2="87" y2="100" gradientUnits="userSpaceOnUse"><stop stop-color="#ebffff"/><stop offset=".15" stop-color="#6df6ff"/><stop offset=".5" stop-color="#167c9e"/><stop offset="1" stop-color="#122c55"/></linearGradient>
+    <linearGradient id="thrust" x1="0" y1="165" x2="0" y2="199" gradientUnits="userSpaceOnUse"><stop stop-color="#efffff"/><stop offset=".18" stop-color="#8bfaff"/><stop offset=".5" stop-color="#27bddf" stop-opacity=".7"/><stop offset="1" stop-color="#088db9" stop-opacity="0"/></linearGradient>
+    <filter id="glow" x="-150%" y="-70%" width="400%" height="240%"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <!-- twin ion exhausts -->
+  <g opacity=".7" filter="url(#glow)"><path d="M44 166h20l-7 32h-5Z" fill="#4ed9ff"/><path d="M97 166h20l-7 32h-5Z" fill="#4ed9ff"/></g>
+  <path d="M46 166h16l-4 24-4 9-4-9Z" fill="url(#thrust)"/><path d="M99 166h16l-4 24-4 9-4-9Z" fill="url(#thrust)"/>
+  <!-- the dark pressure frame exposes depth around the armor -->
+  <path d="m80 5 11 20 6 43 17 18 3-14 9 11 3 19 23 35-4 29-20-10-18 8-15-6-15 17-15-17-15 6-18-8-20 10-4-29 23-35 3-19 9-11 3 14 17-18 6-43Z" fill="#0b1529" stroke="#708c9d" stroke-width="1.4"/>
+  <!-- swept wing spars and canards -->
+  <path d="m42 76 2 30-19 30-11 23 2-25 21-33 1-19Zm76 0-2 30 19 30 11 23-2-25-21-33-1-19Z" fill="#3f5269" stroke="#94a8b0" stroke-width="1"/>
+  <path d="m57 70-12 35-25 31-4 19 22-11 27-38 3-31Zm46 0 12 35 25 31 4 19-22-11-27-38-3-31Z" fill="url(#wing)" stroke="#111e34" stroke-width="2"/>
+  <path d="m45 106-21 31-3 11 16-10 19-28Zm70 0 21 31 3 11-16-10-19-28Z" fill="#e0e2d7"/>
+  <path d="m29 131 12-17 5 4-13 18Zm102 0-12-17-5 4 13 18Z" fill="#5a768e"/>
+  <path d="m39 111 4-6 6 5-4 6Zm82 0-4-6-6 5 4 6Z" fill="#d95544"/>
+  <path d="m21 148 13-7m92 0 13 7" stroke="#edc175" stroke-width="2"/>
+  <!-- outboard rail cannons -->
+  <path d="M34 105V83l4-8 4 8v22Z" fill="#1a2940" stroke="#8b9eaa"/><path d="M118 105V83l4-8 4 8v22Z" fill="#1a2940" stroke="#8b9eaa"/>
+  <path d="M37 77V65m86 12V65" stroke="#d7daca" stroke-width="2"/><path d="M35 88h6m78 0h6M35 93h6m78 0h6" stroke="#566a80" stroke-width="2"/>
+  <!-- twin reactor pods -->
+  <path d="m51 90 14 9 3 59-8 15H47l-7-10 3-43Z" fill="url(#steel)" stroke="#142238" stroke-width="2"/>
+  <path d="m109 90-14 9-3 59 8 15h13l7-10-3-43Z" fill="url(#steel)" stroke="#142238" stroke-width="2"/>
+  <path d="m50 98 11 6 1 35-17 9 3-28Zm60 0-11 6-1 35 17 9-3-28Z" fill="url(#hull)"/>
+  <path d="m47 123 14-7m38 0 14 7M45 139l16-7m38 0 16 7" stroke="#596f81" stroke-width="1.2"/>
+  <path d="M46 150h15v17H46zm53 0h15v17H99Z" fill="#122039" stroke="#667d8c"/>
+  <path d="M48 150h11m42 0h11M48 154h11m42 0h11M48 158h11m42 0h11" stroke="#829ca5" stroke-width="1.5"/>
+  <path d="M48 166h11m42 0h11" stroke="#d3ffff" stroke-width="3"/>
+  <path d="M48 166h11m42 0h11" stroke="#29d9ff" stroke-width="6" opacity=".45" filter="url(#glow)"/>
+  <!-- long armored center fuselage -->
+  <path d="m80 10 9 17 5 45 8 34-8 42-14 17-14-17-8-42 8-34 5-45Z" fill="url(#hull)" stroke="#12233a" stroke-width="2"/>
+  <path d="m80 11-2 32-9 32-9 31 7 6 9-20 4-44 4 44 9 20 7-6-9-31-9-32Z" fill="#f1edde"/>
+  <path d="m80 17 3 21-3 15-3-15Z" fill="#304e6b"/><path d="M79 21v16" stroke="#cfe0df"/>
+  <path d="m72 56-7 36 6 14 9 5 9-5 6-14-7-36-8-10Z" fill="#172840" stroke="#819caa" stroke-width="1.5"/>
+  <path d="m80 51-7 10-5 29 6 11 6 4 6-4 6-11-5-29Z" fill="url(#glass)" stroke="#0f253d" stroke-width="1.5"/>
+  <path d="m78 57-3 8-4 22 3 7 1-19 5-14Z" fill="#c8ffff" opacity=".8"/><path d="m73 92 7-3 7 3m-7-39v36" stroke="#31516b" stroke-width="1.4"/>
+  <path d="m63 111 11-5 6 9 6-9 11 5-5 29-12 16-12-16Z" fill="#92a8b2" stroke="#3e566e"/>
+  <path d="m80 118 10-4-3 26-7 11-7-11-3-26Z" fill="#dae0d5"/><path d="m80 120 2 19-2 8-2-8Z" fill="#4b647e"/>
+  <path d="m66 116 3 16m22-16-3 16" stroke="#eff1df"/>
+  <path d="m71 150 9 11 9-11-1 11-8 11-8-11Z" fill="#263c55"/>
+  <!-- maintenance markings, fasteners, and edge wear -->
+  <path d="M47 109h9m48 0h9" stroke="#e3a34d" stroke-width="3"/><path d="M49 109h1m57 0h1" stroke="#25394d" stroke-width="3"/>
+  <path d="m80 112-3 4 3 4 3-4Z" fill="#b84339"/><path d="m49 119 4 1m-4 2 3 1m52 5 4 1m-55 7 3-2m-29 9 3-2m61-90 1 6m-22 60 2 3m33 11 3 2m17 12 3 4" stroke="#40526a" stroke-width=".9"/>
+  <path d="m49 99-2 9m64-9 2 9M66 73l-3 13m33-3 2 10m-50 43-2 6m86-7 6 9" stroke="#f3f1dc" stroke-width="1.1"/>
+  <g fill="#24364c"><circle cx="64" cy="105" r="1.2"/><circle cx="96" cy="105" r="1.2"/><circle cx="69" cy="139" r="1.1"/><circle cx="91" cy="139" r="1.1"/><circle cx="51" cy="113" r=".9"/><circle cx="109" cy="113" r=".9"/><circle cx="33" cy="139" r="1"/><circle cx="127" cy="139" r="1"/></g>
+</svg>

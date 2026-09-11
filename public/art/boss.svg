@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 174" fill="none">
+ <defs>
+  <linearGradient id="armor" x1="47" y1="24" x2="214" y2="151" gradientUnits="userSpaceOnUse"><stop stop-color="#b58585"/><stop offset=".25" stop-color="#8b525f"/><stop offset=".7" stop-color="#513148"/><stop offset="1" stop-color="#25253c"/></linearGradient>
+  <linearGradient id="dark" x1="0" y1="25" x2="0" y2="155" gradientUnits="userSpaceOnUse"><stop stop-color="#343549"/><stop offset="1" stop-color="#121b2b"/></linearGradient>
+  <linearGradient id="core" x1="0" y1="68" x2="0" y2="139" gradientUnits="userSpaceOnUse"><stop stop-color="#ffcaaf"/><stop offset=".4" stop-color="#ff6f65"/><stop offset="1" stop-color="#8e294d"/></linearGradient>
+  <radialGradient id="glow"><stop stop-color="#ff6b69" stop-opacity=".6"/><stop offset="1" stop-color="#ff4d69" stop-opacity="0"/></radialGradient>
+ </defs>
+ <ellipse cx="130" cy="94" rx="71" ry="75" fill="url(#glow)"/>
+ <!-- exposed truss, elongated wing batteries -->
+ <path d="m130 14 22 14 13 18 29-20 27 4 13 22 18 11v56l-22 24-27-11-23-28-24 31-26 29-26-29-24-31-23 28-27 11-22-24V63l18-11 13-22 27-4 29 20 13-18Z" fill="#111829" stroke="#ab777d" stroke-width="1.6"/>
+ <path d="m40 35 23-4 34 25-10 23-22 10-22 41-12 6-18-20V68l18-12Zm180 0-23-4-34 25 10 23 22 10 22 41 12 6 18-20V68l-18-12Z" fill="url(#armor)" stroke="#2d253b" stroke-width="2"/>
+ <path d="m38 41 24-4 25 20-6 9-30-6-18 23-16-10 13-11Zm184 0-24-4-25 20 6 9 30-6 18 23 16-10-13-11Z" fill="#b17b7d"/>
+ <path d="m21 84 20 6-7 24-3 16-15-16Zm218 0-20 6 7 24 3 16 15-16Z" fill="#655468"/>
+ <path d="m44 67 20 3 9 11-20 8-12 23-4-14Zm172 0-20 3-9 11 20 8 12 23 4-14Z" fill="url(#dark)" stroke="#b1787e"/>
+ <path d="m47 75 11 2m-14 3 13 2m-16 3 12 2m-14 3 10 2m164-17-11 2m14 3-13 2m16 3-12 2m14 3-10 2" stroke="#675a71" stroke-width="2"/>
+ <!-- reactor nacelles -->
+ <path d="m85 47 18-5 14 20-7 54-19 22-15-9-5-34Z" fill="url(#dark)" stroke="#94606e" stroke-width="1.6"/>
+ <path d="m175 47-18-5-14 20 7 54 19 22 15-9 5-34Z" fill="url(#dark)" stroke="#94606e" stroke-width="1.6"/>
+ <path d="m84 56 14-6 8 12-7 44-10 18-9-8-3-18Zm92 0-14-6-8 12 7 44 10 18 9-8 3-18Z" fill="url(#armor)"/>
+ <path d="m79 83 20-7m-21 14 19-7m-17 14 16-7m85-7-20-7m21 14-19-7m17 14-16-7" stroke="#3a2b42" stroke-width="3"/>
+ <path d="m89 107-3 12m85-12 3 12" stroke="#ffad8e" stroke-width="3"/>
+ <!-- central armored bridge -->
+ <path d="m130 17 17 12 13 28-5 22 9 23-14 35-20 24-20-24-14-35 9-23-5-22 13-28Z" fill="url(#armor)" stroke="#30253b" stroke-width="2"/>
+ <path d="m130 21 14 11 10 24-13-6-11-16-11 16-13 6 10-24Z" fill="#ba8987"/>
+ <path d="m130 37 10 17 8 12-5 29 8 13-11 27-10 15-10-15-11-27 8-13-5-29 8-12Z" fill="url(#dark)" stroke="#c98685" stroke-width="1.2"/>
+ <path d="m130 56 9 13-4 25 8 15-7 23-6 10-6-10-7-23 8-15-4-25Z" fill="url(#core)"/>
+ <path d="m130 64 4 7-4 24-4-24Zm0 39 6 7-6 19-6-19Z" fill="#ffdec2"/>
+ <path d="m118 78 24 0m-26 11h28m-27 29h26" stroke="#281f35" stroke-width="4"/>
+ <path d="M111 47h7m24 0h7m-45 55 7 9m45-9-7 9m-32 31 11 13m14-13-11 13" stroke="#ce8a86" stroke-width="1.6"/>
+ <!-- four downward-pointing siege guns -->
+ <path d="M22 94h13v40H22zm203 0h13v40h-13ZM58 96h12v41H58zm132 0h12v41h-12Z" fill="#1c2335" stroke="#8e7280" stroke-width="1.2"/>
+ <path d="M25 101h7v24h-7zm203 0h7v24h-7ZM61 103h6v25h-6zm132 0h6v25h-6Z" fill="#976d6e"/>
+ <path d="M23 131h11m192 0h11M59 134h10m122 0h10" stroke="#ffca8a" stroke-width="3"/>
+ <path d="M23 98h11m192 0h11M59 100h10m122 0h11" stroke="#dca28d" stroke-width="2"/>
+ <!-- discarded hull modules and old service scars -->
+ <path d="m60 39 12 9-5 7-11-7Zm140 0-12 9 5 7 11-7Z" fill="#55354d"/><path d="m62 43 6 4m124 0 6-4" stroke="#e2b494" stroke-width="2"/>
+ <path d="m40 37 4 4-5 7m148-12 3 5-6 4m50 34 3 5-1 8M109 32l4 3m-25 24 3 5m17 67 5 5m32-84 4 8m23 50 4 5m-153-8 6-4m180 16 6 4m-163-2 5-6" stroke="#e9bda9" stroke-width="1" opacity=".7"/>
+ <path d="m19 62 4 1m37 22 4-3m36-30 4 2m-19 61 5-3m63-79 3 3m52 21 4 1m-36 61 3 2" stroke="#111929" stroke-width="2"/>
+ <g fill="#1b1c2d"><circle cx="39" cy="58" r="2"/><circle cx="221" cy="58" r="2"/><circle cx="108" cy="60" r="1.7"/><circle cx="152" cy="60" r="1.7"/><circle cx="104" cy="118" r="1.6"/><circle cx="156" cy="118" r="1.6"/></g>
+</svg>
