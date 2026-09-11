@@ -9,7 +9,9 @@ export default defineConfig({
     const walk = (dir: string): string[] => readdirSync(dir, { withFileTypes: true }).flatMap(file => file.isDirectory() ? walk(join(dir, file.name)) : [join(dir, file.name)]);
     const files = walk('dist').filter(file => !file.endsWith('sw.js'));
     const hash = createHash('sha256').update(readFileSync('public/sw.js')); files.forEach(file => hash.update(readFileSync(file)));
-    const source = readFileSync('public/sw.js', 'utf8').replace('__EPOCH_CACHE__', `epoch-${hash.digest('hex').slice(0, 12)}`).replace('__EPOCH_ASSETS__', JSON.stringify(['/', ...files.map(file => `/${file.replace(/^dist\//, '')}`)]));
+    // Cloudflare consumes these control files; they are not public fetchable assets.
+    const publicFiles = files.filter(file => !['dist/_headers', 'dist/_redirects'].includes(file));
+    const source = readFileSync('public/sw.js', 'utf8').replace('__EPOCH_CACHE__', `epoch-${hash.digest('hex').slice(0, 12)}`).replace('__EPOCH_ASSETS__', JSON.stringify(['/', ...publicFiles.map(file => `/${file.replace(/^dist\//, '')}`)]));
     writeFileSync('dist/sw.js', source);
   } }]
 });

@@ -49,6 +49,19 @@ Before release, check on a physical phone:
 5. HTTPS Home Screen installation shows the EPOCH icon/title and launches offline after a complete first online load.
 6. Play all five sectors on-device and assess boss readability, sustained frame pacing, and battery/thermal behavior.
 
+## Live Cloudflare verification
+
+Published **11 September 2026** at **https://epoch.jaqstudios.com/**, version `9787b439-b97c-4c85-bb27-78d93fdaa665`, on the account's confirmed **Workers Free** plan.
+
+- All **35 public production files** matched the local build byte-for-byte. HTTPS validated normally, the root and service worker returned `Cache-Control: no-cache`, manifest and icon MIME types were correct, and `/_headers` returned 404.
+- **Chrome desktop and WebKit with the iPhone 13 profile** passed live menu/archive, preference restoration after reload, viewport fit, launch/HUD, pause/frozen timers/resume, settings while paused, simulated background blur, and return-to-menu checks. Development controls were absent; the service worker controlled the page with 35 cached resources. Neither browser reported runtime or HTTP errors.
+- **Chrome live offline reload and combat launch passed**, with ordinary HTTP caching disabled. No live WebKit offline-emulation claim is made; the separate local production test with its origin stopped covers that engine's cache-backed launch.
+- Public DNS and the authoritative nameservers resolved the new hostname, but this Mac's system resolver initially retained a negative response. The live browser checks used a temporary local CONNECT tunnel for this exact hostname to its authoritative Cloudflare address. TLS remained end-to-end with normal hostname and certificate verification. No global DNS configuration or certificate-verification setting was changed. This verifies the deployed game and HTTPS, not successful DNS resolution on every player's network.
+- The **entire WebKit iPhone-profile smoke test subsequently passed with ordinary DNS and no tunnel or override**, including all interactions above, 35 cached resources, and zero runtime or HTTP errors. Chrome's ordinary navigation still returned `ERR_NAME_NOT_RESOLVED` at the final check; its full gameplay and offline results above used the temporary tunnel.
+- **DNS follow-up, 19:22 UTC:** the macOS resolver's cached failure cleared. Ordinary HTTP and HTTPS requests both returned 200, and the user's Chrome tab and a fresh Codex in-app browser tab displayed the EPOCH menu at the HTTPS address without any DNS override. No network preferences, hosts entries, or certificate checks were changed.
+
+These are macOS browser tests, **not physical iPhone Safari or Home Screen validation**.
+
 ## Reproduce
 
 Use the commands in [README.md](../README.md). `scripts/verify-campaign.mjs` is intentionally an assisted accelerated simulation. `scripts/verify-touch.mjs` uses actual browser touch events through Chrome CDP. `scripts/verify-production.mjs` serves `dist/` on an isolated temporary origin and then shuts down that origin to verify service-worker-backed launch, with ordinary HTTP caching disabled. No test communicates with a backend or modifies the original Godot project.

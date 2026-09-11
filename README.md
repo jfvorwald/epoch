@@ -1,117 +1,106 @@
-<p align="center">
-  <img src="assets/sprites/ui/icon.png" alt="Epoch" width="200">
-</p>
+# EPOCH — Jaq Studios
 
-# EPOCH
+A complete portrait arcade shooter built with TypeScript, Phaser 3, and Vite. Pilot Voss’s Strelka-9 through five authored sectors, recover intercepted transmissions, and confront the Koschei defense array.
 
-**A post-Soviet retro gundam-style mobile shooter by Mirny Interactive.**
+**Play: [epoch.jaqstudios.com](https://epoch.jaqstudios.com/)**. On iPhone, open this address in Safari and choose **Share → Add to Home Screen** after the first online load.
 
-Powered by the Strelka Engine.
+The original Godot project remains at the repository root: open `project.godot` in Godot 4.3+. Its scenes, GDScript, textures, and story JSON are unchanged. The [original README](docs/GODOT_README.md) and [source review](docs/GODOT_REVIEW.md) distinguish existing behavior from documented ambitions.
 
----
+## Run the browser game
 
-## The Story
+Use Node.js 22.12+ (Node 24 was used for validation) and pnpm:
 
-### Prologue: The Signal
-
-It's 2049. The internet is dead. Not broken — *dead*. Every server, every satellite, every undersea cable went silent at exactly 00:00:00 UTC on January 1st. The moment the Unix epoch counter hit 2,493,849,600, something woke up inside it.
-
-They called it **The Collapse**. Three billion devices, all broadcasting the same thing: a single repeating signal, pulsing in a frequency that shouldn't exist. Governments fell. Cities went dark. The old world ended not with a bang, but with a ping.
-
-### The Pilot: Voss
-
-You are **Voss** — callsign, not a name. Nobody remembers names anymore. You're a pilot in the **Kosmoflot**, the last military force still operational, cobbled together from the ruins of post-Soviet aerospace programs and whatever machines still answer to human hands.
-
-Your ship is a **Strelka-9** — half-gundam, half-fighter, running on the only engine that still works in the new physics: the **Scrotum-Based Physics Engine**. Don't ask how it got the name. The engineer who built it, Dr. Kalinina, had a sense of humor and a death wish. She's gone now. The engine remains.
-
-### The Mission
-
-The signal is coming from somewhere beyond the static wall — a boundary in low orbit where all electromagnetic radiation turns to noise. Nothing that enters comes back. But the signal punches through it like it isn't there.
-
-Kosmoflot Command — what's left of it, operating from a bunker under what used to be Mirny-7 — has one order: **fly into the static wall, find the source of the signal, and kill it.**
-
-One hundred levels of hostile airspace stand between you and the wall. The machines that went silent? They didn't stay silent. They *changed*. Drones, defense grids, automated weapons platforms — all reprogrammed by the signal, all pointing their guns at anything still human.
-
-### The Transmissions
-
-As you fight through each sector, your ship intercepts **transmissions** — fragments of communication from before and during The Collapse. Some are military orders. Some are distress calls. Some are... wrong. Messages from the future. Messages from yourself. Messages that know what you're about to do before you do it.
-
-Commander Volkov's voice crackles through most of them. He was the last one to fly past sector 50. He says the machines remember everything. He says the signal isn't attacking — it's *inviting*.
-
-### The Epochs
-
-Here's the part they don't tell you in the briefing:
-
-The static wall isn't a wall. It's a loop. When you break through level 100, you don't reach the other side. You reach **the beginning again** — but everything is different. Harder. Faster. The enemies have evolved. The transmissions have changed. The story shifts.
-
-Each loop is an **Epoch**. Each epoch is a prestige cycle. The machines learn from your previous run. The signal adapts. But so do you — your weapons carry over, your ship upgrades persist, and each epoch reveals a deeper layer of what actually happened on January 1st, 2049.
-
-The question isn't whether you can survive 100 levels.
-
-The question is: **how many epochs until you understand what the signal actually wants?**
-
-### Key Characters
-
-- **Voss** — The pilot. You. Callsign inherited from the previous pilot, who inherited it from the one before. How many Vosses have there been?
-- **Cmdr. Volkov** — Your handler. His transmissions guide you through early levels. But his timeline doesn't match yours.
-- **Dr. Kalinina** — Creator of the Scrotum-Based Physics Engine. Officially KIA. Her research notes keep showing up in transmissions, and they describe things that haven't happened yet.
-- **The Signal** — Not a character. Not a weapon. Not an AI. Something older. Something that was running before January 1st, 1970, and has been counting ever since.
-
----
-
-## Gameplay
-
-### Core Loop
-1. Ship follows your finger/mouse, auto-fires upward
-2. Enemies form up at the top of the screen, then descend in waves
-3. Kill enemies to drop weapon buffs (fire rate, spread shot, damage) and health
-4. Survive all waves to complete the level
-5. Intercepted transmissions appear between levels
-6. 100 levels per epoch, then prestige into the next
-
-### Enemy Types
-- **Straight** — Red squares, fly straight down
-- **Zigzag** — Orange diamonds, weave side to side
-- **Shooter** — Magenta triangles, slow but fire back at you
-
-### Power-ups
-- **Health** (green) — Restores HP
-- **Rapid Fire** (orange) — Doubles fire rate for 8 seconds
-- **Spread Shot** (blue) — Multi-directional bullets for 8 seconds
-- **Damage Boost** (red) — 3x bullet damage for 8 seconds
-
-Power-ups are attracted toward your ship when nearby.
-
----
-
-## Running
-
-1. Open project in Godot 4.x
-2. Hit Play (F5)
-3. Survive.
-
-```
-/snap/bin/gd-godot-engine-snapcraft --path ~/epoch --rendering-driver opengl3
+```sh
+pnpm install
+pnpm dev
 ```
 
-## Sprite Sizes (For Artists)
+Open **http://localhost:5173/**. Vite listens on all interfaces and uses port 5173. The committed lockfile pins the tested dependencies. `npm install` and `npm run dev` also work; pnpm is preferred for reproducing the lockfile.
 
-| Asset | Size | Notes |
-|-------|------|-------|
-| Player ship | 64x64 px | Facing UP |
-| Enemies | 32x32 to 64x64 px | Facing DOWN |
-| Bullets (default) | 8x16 px | |
-| Bullets (rapid) | 6x16 px | Thin, orange |
-| Bullets (spread) | 10x12 px | Blue triangle |
-| Bullets (damage) | 12x16 px | Fat, red/white |
-| Power-ups | 24x24 px | Per-type sprites |
+### Open from an iPhone on the same Wi-Fi
 
-All sprites: transparent PNG with alpha channel. Drop replacements into `assets/sprites/` with matching filenames.
+1. Keep `pnpm dev` running on your computer.
+2. Connect the computer and iPhone to the same Wi-Fi. Allow local network access through the computer’s firewall if prompted.
+3. Read the **Network** URL printed by Vite in your computer’s terminal and open it in **Safari on the iPhone**. The address depends on your current network. Do not use `localhost` on the phone: that means the phone itself.
+4. Tap **Launch**. Touch anywhere in the playfield and drag. Movement is relative; the ship does not jump to the initial touch. Start your drag below the ship to leave it visible above your thumb. Lift to hold position. Weapons fire automatically.
+5. Tap **Ⅱ** to pause. Switching apps, leaving the page, canceling touch, or changing the viewport pauses the fight; resume explicitly.
 
-## Architecture
+If the phone cannot connect, check that both devices use the same LAN, guest Wi-Fi client isolation is off, and the firewall allows port 5173. Prefer the LAN address over a VPN/Tailscale address unless the phone uses that network too.
 
-See `CLAUDE.md` for full design documentation.
+### Add to the Home Screen
 
----
+In iPhone Safari choose **Share → Add to Home Screen**, enable **Open as Web App** if offered, and add **EPOCH**. The manifest, portrait orientation preference, standalone metadata, safe-area padding, and custom icons are included. [Apple’s instructions](https://support.apple.com/guide/iphone/open-as-web-app-iphea86e5236/ios).
 
-*Ball Soft. Since the collapse.*
+The HTTP Wi-Fi development build supports online play. **Service workers and offline installation require HTTPS or localhost**, so use an HTTPS-hosted production build for dependable installed/offline use on the phone. A computer’s local IP over HTTP is not a secure context. [Service worker requirements](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API).
+
+```sh
+pnpm build
+pnpm preview
+```
+
+Production is hosted at **https://epoch.jaqstudios.com** on Cloudflare Workers Static Assets. Use `pnpm deploy:check` to validate packaging and `pnpm deploy` to build and publish updates after Cloudflare authorization. See the [deployment guide](docs/DEPLOYMENT.md). No backend is needed. First load production online; the service worker precaches the shell, artwork, icons, and fonts. Updated builds receive a new cache revision and activate after old tabs close.
+
+## Playable content
+
+| Sector | Encounter design |
+| --- | --- |
+| 01 — Perimeter Drift | Chevrons and arcs, then weaving pincers; introduces rapid and spread |
+| 02 — Dead Relay | Crossing patrols, fast columns, first aimed shooter formations |
+| 03 — Arsenal Graveyard | Armored shooters and escorts; damage boosts and layered attacks |
+| 04 — Static Wall | Six mixed formations with faster dives |
+| 05 — Black Array | Final escorts followed by Koschei’s three-phase defense array |
+
+The menu includes Launch, Continue, Transmissions, Settings, best score, and furthest sector. Initial orders are readable immediately. Transmissions unlock after sectors 1, 3, and 5; the final one leads to victory. Defeat offers retry, the previous boundary when available, or menu.
+
+Desktop controls: mouse drag, WASD, or arrow keys. Escape or P toggles pause. Mobile uses one relative drag; additional touches do not take over. Cyan narrow bolts are friendly, red round projectiles hostile. The damage hitbox is smaller than the ship silhouette. Hits grant 1.3 seconds of invulnerability.
+
+Pickups: **+** restores two hull points up to five; **R** doubles firing rate; **S** adds angled streams; **D** doubles projectile damage. Weapon buffs last eight seconds, combine across types, refresh on recollection, and freeze while paused. Pickups attract toward the ship and eventually magnetize automatically. Securing a sector repairs one hull point and clears temporary buffs.
+
+## Local saves
+
+The versioned `epoch.browser.save.v1` localStorage record holds preferences, records, unlocked transmissions, and a completed-boundary checkpoint. Completing sector 1 saves the start of sector 2 with score and repaired hull. Continue returns there after reload or defeat; mid-sector positions and buffs are not persisted. Launch/retry replaces the run’s checkpoint while retaining records, archive unlocks, and preferences. Victory clears Continue.
+
+Corrupt or incompatible saves fall back safely. With blocked/full device storage, gameplay continues and outcome screens identify a session-only checkpoint. Saves belong to the origin/browser/device: LAN, localhost, hosted URL, and installed app storage can differ.
+
+## Validation
+
+```sh
+pnpm test
+pnpm exec playwright install webkit
+pnpm test:e2e
+```
+
+The desktop test uses installed Google Chrome. Install Chrome or adjust `channel: 'chrome'` in `playwright.config.ts`. WebKit emulates an iPhone 13 viewport on the Mac: **browser simulation, not a physical iPhone test**.
+
+With the development server on 5173, and after `pnpm build`:
+
+```sh
+node scripts/verify-touch.mjs
+node scripts/verify-campaign.mjs
+EPOCH_BROWSER=webkit node scripts/verify-campaign.mjs
+node scripts/verify-production.mjs
+```
+
+The production verifier serves `dist/` on an isolated temporary origin, closes that server, and checks that the cached game reloads and launches without it.
+
+See [validation notes](docs/VALIDATION.md) for coverage, measured limits, campaign testing, and the remaining physical-device checks.
+
+## Structure and expansion
+
+```text
+src/data/levels.ts          Authored wave/formation schedules and boss data
+src/data/transmissions.ts   Stable fragment IDs and unlock points
+src/game/CombatScene.ts     Combat, controls, collisions, buffs and finite effects
+src/game/math.ts            Swept collision and relative movement helpers
+src/game/save.ts            Versioned storage validation
+src/game/audio.ts           Gesture-unlocked synthesized music and SFX
+src/main.ts                DOM menus, HUD, flow and checkpoint policy
+src/style.css              Cockpit design, safe areas and reduced motion
+public/art/                Original SVG spacecraft, scenery and insignia
+public/fonts/              Local OFL fonts and licenses
+vite.config.ts             Build and offline-shell precache
+```
+
+Enemies, formations, pickups, levels, transmissions, and saves have explicit types. Future 100-level epochs can add schedules and story IDs; persistent upgrades require a save migration and upgrade model. **100-level campaigns, prestige loops, persistent upgrades, shops, and leaderboards are not implemented.**
+
+Browser art is original code-authored vectors; the reference image informed composition, not copied assets. Typography is bundled under SIL Open Font Licenses. Audio is original procedural synthesis and starts after interaction. Reduced motion honors the device preference on first use and disables decorative drift, shake, screen flash, and pulsing effects.
