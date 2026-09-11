@@ -6,6 +6,8 @@ Cloudflare recommends Workers for new projects. Static asset delivery is free an
 
 ## Published deployment
 
+- Current gameplay release, **11 September 2026**: source commit `3c8d642`, Cloudflare version `a212189c-1ed7-47f1-88f9-d71d4af39cb1`. Includes the ship hangar and Manta unlock, sector multishot and weapons, denser waves and distinct guardians, three-hit hulls, and visible destruction before defeat.
+- All **40 public production files** matched the local build after this release. Chrome and iPhone-profile WebKit passed live hangar, locked-Manta, three-hull, seven-wave first sector, launch, pause/resume, and service-worker checks with no runtime or HTTP errors. Production ignores `?playtest=1` and exposes no development controls.
 - Published on **11 September 2026** to **https://epoch.jaqstudios.com/**.
 - Application: `jaq-epoch`; initial version: `9787b439-b97c-4c85-bb27-78d93fdaa665`.
 - Workers plan confirmed in the account dashboard: **Free ($0)**. No paid upgrade, backend binding, or DigitalOcean resource was created.

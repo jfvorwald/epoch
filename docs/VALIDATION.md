@@ -10,6 +10,7 @@ The latest revision raises regular enemy counts to 54 / 70 / 86 / 106 / 124 with
 - **18 targeted Chrome/WebKit checks pass**, including new three-real-hit regressions in normal and reduced-motion modes, frozen gameplay during the explosion, zero healing after death, 0.95-second delayed Signal lost, collision/invulnerability, pause, checkpoints, tuned ships and the boss counted as the final HUD wave.
 - A captured mid-explosion frame confirms visible debris and a burst over the unobstructed battlefield. Reduced-motion graphics remain static for the same interval.
 - The campaign verifier now waits through the death animation and allows longer encounters. Its armored/heavy pilot cleared sectors 1–2, then lost in sector 3 under the new three-hit balance; its strict victory assertion therefore fails. The previous victory measurements below apply to the earlier balance only. Human playtesting remains the balance authority.
+- **Published release verification:** source commit `3c8d642` deployed as Cloudflare version `a212189c-1ed7-47f1-88f9-d71d4af39cb1` on 11 September 2026. All 40 public files at `https://epoch.jaqstudios.com/` matched the local build. Chrome and iPhone-profile WebKit verified the three-hit hull, first sector's seven waves including boss, hangar tuning, locked Manta, disabled playtest mode, launch, pause/resume and active service worker with no HTTP or runtime errors.
 
 ## Earlier local ship and combat update
 
