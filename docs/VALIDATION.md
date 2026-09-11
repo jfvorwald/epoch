@@ -10,6 +10,7 @@ The user's existing live tab still loaded the original bundle despite the curren
 - `scripts/verify-update.mjs` reproduces the old worker, installs a waiting legacy release, and confirms an ordinary reload stays stale. It then deploys current `dist/` and triggers the browser's update check while keeping that tab open. **Chrome and iPhone-profile WebKit pass:** the new worker activates, obsolete caches are removed, the document is not automatically reloaded, and an ordinary reload shows the hangar and three-hit hull.
 - Both update checks retain seeded settings, checkpoint, score and seven Manta parts byte-for-byte in local storage, with no runtime errors. This verifies migration after update discovery, not browser-specific update-check timing.
 - The production build and **36 unit tests pass**. Both browsers also reload and launch offline with the isolated origin stopped, with **40 cached assets** and no runtime errors.
+- **Live recovery verified:** source commit `184feac` deployed as Cloudflare version `50143e98-1e40-4959-abeb-31c374c1ac2e`. All 40 public production files and the root document matched `dist/`. The user's existing tab initially loaded `index-SvMxQQgg.js`; after deployment and two ordinary refreshes it loaded `index-CaoKTosf.js`. Its live hangar showed both ships, Manta locked at 0/12 parts, and hull 3. No cache, cookies or local storage were manually cleared.
 
 ## Three-hit hull and density revision
 
