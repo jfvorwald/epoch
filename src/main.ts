@@ -313,7 +313,19 @@ function resizeViewport() { if (screen === 'playing') pauseFlight(true); documen
 window.visualViewport?.addEventListener('resize', resizeViewport);
 window.addEventListener('resize', resizeViewport);
 resizeViewport();
-if (import.meta.env.PROD && 'serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load', () => { void navigator.serviceWorker.register('/sw.js').catch(() => notice('Offline cache unavailable · online play is ready')); });
+if (import.meta.env.PROD && 'serviceWorker' in navigator && window.isSecureContext) {
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) notice('Game updated · refresh when ready');
+    hadController = true;
+  });
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(registration => {
+      // Explicitly check even when a long-lived installed game already has a worker.
+      void registration.update().catch(() => {});
+    }).catch(() => notice('Offline cache unavailable · online play is ready'));
+  });
+}
 if (import.meta.env.DEV) {
   Object.assign(window, { __EPOCH__: { snapshot: () => ({ screen, playtest, save: structuredClone(save), hud: lastHud, combat: scene.getDebugState() }), debug: (action: string, payload?: Record<string, unknown>) => scene.debug(action, payload), scene, game } });
 }

@@ -40,7 +40,7 @@ pnpm build
 pnpm preview
 ```
 
-Production is hosted at **https://epoch.jaqstudios.com** on Cloudflare Workers Static Assets. Use `pnpm deploy:check` to validate packaging and `pnpm deploy` to build and publish updates after Cloudflare authorization. See the [deployment guide](docs/DEPLOYMENT.md). No backend is needed. First load production online; the service worker precaches the shell, artwork, icons, and fonts. Updated builds receive a new cache revision and activate after old tabs close.
+Production is hosted at **https://epoch.jaqstudios.com** on Cloudflare Workers Static Assets. Use `pnpm deploy:check` to validate packaging and `pnpm deploy` to build and publish updates after Cloudflare authorization. See the [deployment guide](docs/DEPLOYMENT.md). No backend is needed. First load production online; the service worker precaches the shell, artwork, icons, and fonts. Updated builds activate after their complete cache is ready. Refresh to load the latest release; active flights are not automatically reloaded.
 
 ## Playable content
 
@@ -91,9 +91,10 @@ node scripts/verify-touch.mjs
 node scripts/verify-campaign.mjs
 EPOCH_BROWSER=webkit node scripts/verify-campaign.mjs
 node scripts/verify-production.mjs
+node scripts/verify-update.mjs
 ```
 
-The production verifier serves `dist/` on an isolated temporary origin, closes that server, and checks that the cached game reloads and launches without it.
+The production verifier serves `dist/` on an isolated temporary origin, closes that server, and checks that the cached game reloads and launches without it. The update verifier checks migration from the legacy cache-first worker with an old tab still open, including preservation of saved progress.
 
 See [validation notes](docs/VALIDATION.md) for coverage, measured limits, campaign testing, and the remaining physical-device checks.
 

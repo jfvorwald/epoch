@@ -2,6 +2,15 @@
 
 EPOCH browser publisher: **Jaq Studios**. Godot source was reviewed before implementation, not executed. The supplied reference image informed portrait composition; the new SVG artwork is original.
 
+## Returning-player cache update
+
+The user's existing live tab still loaded the original bundle despite the current server files matching the gameplay release. The legacy cache-first service worker kept serving its old HTML while an installed update waited for existing tabs to close.
+
+- Updated workers activate after their complete precache succeeds, without forcing an active document to reload. Online navigation requests fresh HTML; offline navigation uses the complete precached shell. Static assets use the active revision's cache.
+- `scripts/verify-update.mjs` reproduces the old worker, installs a waiting legacy release, and confirms an ordinary reload stays stale. It then deploys current `dist/` and triggers the browser's update check while keeping that tab open. **Chrome and iPhone-profile WebKit pass:** the new worker activates, obsolete caches are removed, the document is not automatically reloaded, and an ordinary reload shows the hangar and three-hit hull.
+- Both update checks retain seeded settings, checkpoint, score and seven Manta parts byte-for-byte in local storage, with no runtime errors. This verifies migration after update discovery, not browser-specific update-check timing.
+- The production build and **36 unit tests pass**. Both browsers also reload and launch offline with the isolated origin stopped, with **40 cached assets** and no runtime errors.
+
 ## Three-hit hull and density revision
 
 The latest revision raises regular enemy counts to 54 / 70 / 86 / 106 / 124 with 7 / 9 / 10 / 11 / 12 total waves including each final boss. Enemy HP increases to 4–10 across the campaign; every ship/loadout has exactly three hull points. Older checkpoints retain their progress with hull capped at three.
