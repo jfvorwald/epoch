@@ -17,6 +17,8 @@ pnpm dev
 
 Open **http://localhost:5173/**. Vite listens on all interfaces and uses port 5173. The committed lockfile pins the tested dependencies. `npm install` and `npm run dev` also work; pnpm is preferred for reproducing the lockfile.
 
+For local review, open **http://localhost:5173/?playtest=1**. Both ships are available, and the menu/hangar lets you choose a starting sector. This profile lasts for the page session and never reads or overwrites your normal save. The production build ignores this option. See the [playtest guide](docs/PLAYTEST.md).
+
 ### Open from an iPhone on the same Wi-Fi
 
 1. Keep `pnpm dev` running on your computer.
@@ -44,21 +46,31 @@ Production is hosted at **https://epoch.jaqstudios.com** on Cloudflare Workers S
 
 | Sector | Encounter design |
 | --- | --- |
-| 01 — Perimeter Drift | Chevrons and arcs, then weaving pincers; introduces rapid and spread |
-| 02 — Dead Relay | Crossing patrols, fast columns, first aimed shooter formations |
-| 03 — Arsenal Graveyard | Armored shooters and escorts; damage boosts and layered attacks |
-| 04 — Static Wall | Six mixed formations with faster dives |
-| 05 — Black Array | Final escorts followed by Koschei’s three-phase defense array |
+| 01 — Perimeter Drift | 54 hostiles in 6 waves, then the Warden's telegraphed fan attacks |
+| 02 — Dead Relay | 70 hostiles in 8 waves and veteran patrols, then a pair of Hounds |
+| 03 — Arsenal Graveyard | 86 armored hostiles in 9 waves, then a carrier that deploys escorts |
+| 04 — Static Wall | 106 hostiles in 10 waves and elite variants, then linked lattice cores |
+| 05 — Black Array | 124 hostiles in 11 waves, then Koschei's three-phase defense array |
 
-The menu includes Launch, Continue, Transmissions, Settings, best score, and furthest sector. Initial orders are readable immediately. Transmissions unlock after sectors 1, 3, and 5; the final one leads to victory. Defeat offers retry, the previous boundary when available, or menu.
+The HUD includes the boss as the last wave, for totals of **7 / 9 / 10 / 11 / 12 waves** across the five sectors.
 
-Desktop controls: mouse drag, WASD, or arrow keys. Escape or P toggles pause. Mobile uses one relative drag; additional touches do not take over. Cyan narrow bolts are friendly, red round projectiles hostile. The damage hitbox is smaller than the ship silhouette. Hits grant 1.3 seconds of invulnerability.
+The menu includes Launch, Continue, Ship Hangar, Transmissions, Settings, best score, and furthest sector. Initial orders are readable immediately. Transmissions unlock after sectors 1, 3, and 5; the final one leads to victory. Defeat offers retry, the previous boundary when available, or menu.
 
-Pickups: **+** restores two hull points up to five; **R** doubles firing rate; **S** adds angled streams; **D** doubles projectile damage. Weapon buffs last eight seconds, combine across types, refresh on recollection, and freeze while paused. Pickups attract toward the ship and eventually magnetize automatically. Securing a sector repairs one hull point and clears temporary buffs.
+Desktop controls: mouse drag, WASD, or arrow keys. Escape or P toggles pause. Mobile uses one relative drag; additional touches do not take over. Cyan narrow bolts are friendly, red round projectiles hostile. The damage hitbox is smaller than the ship silhouette. Every ship has three hull points: the third unrepaired hit destroys it. Hits grant 1.3 seconds of protection with balanced handling (1.0s agile, 1.8s armored). The ship explodes visibly for 0.95 seconds before Signal lost appears; reduced motion uses a static destruction burst with the same delay.
+
+Pickup receipts appear in the lower corner, below the ship's movement boundary. **↑** adds one projectile to each volley for the rest of the sector. Repeated collections stack, and the extra projectiles also apply to replacement weapons. Two multishot carriers appear in every sector. **+** repairs two hull points up to the equipped ship's capacity. **R**, **S**, and **D** provide eight-second rapid fire, temporary spread, and damage boosts; these are occasional drops, with one 40% opportunity per sector. Temporary boosts freeze while paused.
+
+Weapon crates can replace the current attack with **pulse bolts**, **piercing lances**, or a **scatter fan**. Each sector has one 50% weapon-crate opportunity. Weapons remain equipped until replaced or the sector ends. Securing a sector repairs one hull point. The next sector starts with the ship's native weapon, zero multishot upgrades, and no temporary boosts. Pickups attract toward the ship; after the final boss dies, remaining pickups are recovered before the sector result appears.
+
+### Ship hangar and salvage
+
+The starting **Strelka-9** is a narrow cyan interceptor with twin pulse bolts. **Manta-12** is a broad amber crescent with a slower piercing lance attack. Recover **12 ship parts** to permanently unlock Manta. The last boss in each sector has an **18% chance** to drop one part until the ship is assembled. This averages about 67 cleared sectors (13–14 full five-sector runs); individual luck varies. Collected parts are saved immediately and survive defeat and new flights.
+
+The hangar saves separate tuning for each ship. **Agile** handling adds 20% movement speed with a shorter 1.0-second protection window after a hit; **armored** reduces speed by 15% and extends protection to 1.8 seconds. Every configuration has exactly three hull points. A **rapid** reactor fires 25% sooner with 20% less damage per projectile; a **heavy** reactor fires 30% slower with 45% more damage. Balanced settings keep the airframe's base values. Tuning applies to mouse/touch movement as well as keyboard movement. Ship selection and tuning apply to the next new flight; Continue retains the airframe and tuning recorded at its checkpoint.
 
 ## Local saves
 
-The versioned `epoch.browser.save.v1` localStorage record holds preferences, records, unlocked transmissions, and a completed-boundary checkpoint. Completing sector 1 saves the start of sector 2 with score and repaired hull. Continue returns there after reload or defeat; mid-sector positions and buffs are not persisted. Launch/retry replaces the run’s checkpoint while retaining records, archive unlocks, and preferences. Victory clears Continue.
+The versioned `epoch.browser.save.v1` localStorage record holds preferences, records, unlocked transmissions, ship parts, hangar settings, and a completed-boundary checkpoint including its ship/tuning. Existing version-1 saves gain an empty hangar without losing records or checkpoints. Older checkpoints with up to eight hull points migrate to the new three-point cap while retaining their ship, tuning, sector and score. Completing sector 1 saves the start of sector 2 with score and repaired hull. Continue returns there after reload or defeat; mid-sector positions, weapons, and upgrades are not persisted. Launch/retry replaces the run’s checkpoint while retaining records, archive unlocks, hangar progress, and preferences. Victory clears Continue.
 
 Corrupt or incompatible saves fall back safely. With blocked/full device storage, gameplay continues and outcome screens identify a session-only checkpoint. Saves belong to the origin/browser/device: LAN, localhost, hosted URL, and installed app storage can differ.
 
@@ -90,6 +102,7 @@ See [validation notes](docs/VALIDATION.md) for coverage, measured limits, campai
 ```text
 src/data/levels.ts          Authored wave/formation schedules and boss data
 src/data/transmissions.ts   Stable fragment IDs and unlock points
+src/data/ships.ts           Airframes, customization stats and salvage rarity
 src/game/CombatScene.ts     Combat, controls, collisions, buffs and finite effects
 src/game/math.ts            Swept collision and relative movement helpers
 src/game/save.ts            Versioned storage validation
@@ -101,6 +114,6 @@ public/fonts/              Local OFL fonts and licenses
 vite.config.ts             Build and offline-shell precache
 ```
 
-Enemies, formations, pickups, levels, transmissions, and saves have explicit types. Future 100-level epochs can add schedules and story IDs; persistent upgrades require a save migration and upgrade model. **100-level campaigns, prestige loops, persistent upgrades, shops, and leaderboards are not implemented.**
+Enemies, formations, pickups, levels, transmissions, airframes, tuning, and saves have explicit types. More ships can extend the airframe and save models; the current release has two ships and five sectors. **100-level campaigns, prestige loops, shops, and leaderboards are not implemented.**
 
 Browser art is original code-authored vectors; the reference image informed composition, not copied assets. Typography is bundled under SIL Open Font Licenses. Audio is original procedural synthesis and starts after interaction. Reduced motion honors the device preference on first use and disables decorative drift, shake, screen flash, and pulsing effects.

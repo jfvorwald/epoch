@@ -59,12 +59,12 @@ test('real bullet collisions, i-frames and pickups', async ({ page }, info) => {
   await debug(page, 'enemy', { hp: 1 });
   await expect.poll(async () => (await snapshot(page)).combat.kills).toBeGreaterThan(0);
   await debug(page, 'damage');
-  await expect.poll(async () => (await snapshot(page)).combat.hp).toBe(4);
+  await expect.poll(async () => (await snapshot(page)).combat.hp).toBe(2);
   await debug(page, 'spawnEnemyBullet', { y: 630, vy: 600 });
   await page.waitForTimeout(170);
-  expect((await snapshot(page)).combat.hp).toBe(4);
+  expect((await snapshot(page)).combat.hp).toBe(2);
   await debug(page, 'pickup', { kind: 'health' });
-  await expect.poll(async () => (await snapshot(page)).combat.hp).toBe(5);
+  await expect.poll(async () => (await snapshot(page)).combat.hp).toBe(3);
   for (const kind of ['rapid', 'spread', 'damage']) {
     await debug(page, 'pickup', { kind });
     await expect.poll(async () => !!(await snapshot(page)).combat.buffs[kind]).toBeTruthy();
@@ -76,6 +76,82 @@ test('real bullet collisions, i-frames and pickups', async ({ page }, info) => {
   await debug(page, 'expireBuffs');
   expect(Object.keys((await snapshot(page)).combat.buffs)).toHaveLength(0);
 });
+
+for (const reducedMotion of [false, true]) {
+  test(`three real hits destroy the ship before Signal lost${reducedMotion ? ' with reduced motion' : ''}`, async ({ page }) => {
+    if (reducedMotion) {
+      await action(page, 'settings');
+      await page.getByRole('switch', { name: 'Reduced motion', exact: false }).check();
+      await action(page, 'settings-back');
+    }
+    await launch(page);
+    const sequence = await page.evaluate(() => {
+      const flight = (window as any).__EPOCH__;
+      const { scene, game } = flight;
+      game.loop.stop();
+      const advance = (milliseconds: number) => {
+        for (let remaining = milliseconds; remaining > 0; remaining -= 1000 / 60) {
+          scene.update(0, Math.min(remaining, 1000 / 60));
+        }
+      };
+      const capture = () => {
+        const state = flight.snapshot();
+        return {
+          screen: state.screen,
+          combat: state.combat,
+          hudHp: state.hud.hp,
+          playerVisible: scene.player.visible,
+          explosionVisible: scene.playerExplosion.visible,
+          explosionCommands: [...scene.playerExplosion.commandBuffer],
+          visibleEffects: scene.effects.filter((effect: any) => effect.sprite.visible && effect.sprite.alpha > 0).length,
+        };
+      };
+      const impacts = [];
+      for (let hit = 0; hit < 3; hit++) {
+        // Each debug hit creates a real hostile projectile; the normal update and
+        // collision path applies damage. No health or outcome state is assigned.
+        scene.debug('damage');
+        advance(50);
+        impacts.push(capture());
+      }
+      // A pickup and another projectile must not revive or further damage the wreck.
+      scene.debug('pickup', { kind: 'health' });
+      scene.debug('spawnEnemyBullet', { y: scene.player.y - 20, vy: 600 });
+      advance(400);
+      const duringExplosion = capture();
+      advance(700);
+      return { impacts, duringExplosion, finished: capture() };
+    });
+    expect(sequence.impacts.map(impact => impact.combat.hp)).toEqual([2, 1, 0]);
+    for (const impact of sequence.impacts.slice(0, 2)) {
+      expect(impact.combat.maxHp).toBe(3);
+      expect(impact.combat.mode).toBe('combat');
+      expect(impact.screen).toBe('playing');
+      expect(impact.playerVisible).toBe(true);
+    }
+    const fatal = sequence.impacts[2];
+    expect(fatal.hudHp).toBe(0);
+    expect(fatal.combat.mode).toBe('dying');
+    expect(fatal.screen).toBe('playing');
+    expect(fatal.playerVisible).toBe(false);
+    expect(fatal.visibleEffects).toBeGreaterThan(0);
+    expect(fatal.explosionVisible).toBe(true);
+    expect(fatal.explosionCommands.length).toBeGreaterThan(0);
+    expect(sequence.duringExplosion.screen).toBe('playing');
+    expect(sequence.duringExplosion.combat.mode).toBe('dying');
+    expect(sequence.duringExplosion.combat.hp).toBe(0);
+    expect(sequence.duringExplosion.combat.elapsed).toBe(fatal.combat.elapsed);
+    expect(sequence.duringExplosion.combat.score).toBe(fatal.combat.score);
+    expect(sequence.duringExplosion.combat.player).toEqual(fatal.combat.player);
+    expect(sequence.duringExplosion.explosionVisible).toBe(true);
+    expect(sequence.duringExplosion.explosionCommands.length).toBeGreaterThan(0);
+    if (reducedMotion) expect(sequence.duringExplosion.explosionCommands).toEqual(fatal.explosionCommands);
+    expect(sequence.finished.combat.mode).toBe('ended');
+    expect(sequence.finished.combat.hp).toBe(0);
+    expect(sequence.finished.screen).toBe('defeat');
+    await expect(page.locator('.panel h2')).toHaveText('Signal lost.');
+  });
+}
 
 test('pause holds simulation and buff time, long tap and Escape resume', async ({ page }) => {
   await launch(page);
@@ -115,7 +191,7 @@ test('completed boundary survives reload, defeat and retry clean up', async ({ p
   expect((await snapshot(page)).save.checkpoint.level).toBe(2);
   await action(page, 'retry');
   const retried = await snapshot(page);
-  expect(retried.combat.level).toBe(1); expect(retried.combat.hp).toBe(5); expect(retried.combat.score).toBe(0);
+  expect(retried.combat.level).toBe(1); expect(retried.combat.hp).toBe(3); expect(retried.combat.score).toBe(0);
   expect(retried.save.checkpoint).toBeNull(); expect(retried.combat.bullets.hostile).toBe(0);
 });
 

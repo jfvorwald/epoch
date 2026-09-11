@@ -1,9 +1,12 @@
 import { LEVELS } from '../data/levels';
 import { TRANSMISSIONS } from '../data/transmissions';
-import type { Checkpoint, SaveData } from './types';
+import { defaultLoadout, isShipUnlocked, PLAYER_MAX_HP, SHIP_PARTS_REQUIRED } from '../data/ships';
+import type { Checkpoint, SaveData, ShipId, ShipLoadout } from './types';
 
 export const SAVE_KEY = 'epoch.browser.save.v1';
 const MAX_SCORE = 999_999_999;
+// Older v1 hull/loadout combinations allowed up to eight hits.
+const LEGACY_MAX_HP = 8;
 type SaveStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
 /** Every call returns independent mutable state. No browser API is needed by this helper. */
@@ -15,6 +18,10 @@ export function defaultSave(): SaveData {
     checkpoint: null,
     unlockedTransmissions: TRANSMISSIONS.filter((entry) => entry.afterLevel === 0).map((entry) => entry.id),
     preferences: { music: true, sfx: true, reducedMotion: false },
+    hangar: {
+      selectedShip: 'strelka', parts: 0,
+      loadouts: { strelka: defaultLoadout(), manta: defaultLoadout() },
+    },
   };
 }
 
@@ -37,15 +44,37 @@ function boundedInteger(value: unknown, fallback: number, minimum: number, maxim
     : fallback;
 }
 
-function validCheckpoint(value: unknown): Checkpoint | null {
+function validLoadout(value: unknown): ShipLoadout {
+  const loadout = defaultLoadout();
+  if (!isRecord(value)) return loadout;
+  if (value.handling === 'balanced' || value.handling === 'agile' || value.handling === 'armored') {
+    loadout.handling = value.handling;
+  }
+  if (value.reactor === 'balanced' || value.reactor === 'rapid' || value.reactor === 'heavy') {
+    loadout.reactor = value.reactor;
+  }
+  return loadout;
+}
+
+function validShipId(value: unknown, parts: number): ShipId {
+  return value === 'manta' && isShipUnlocked('manta', parts) ? 'manta' : 'strelka';
+}
+
+function validCheckpoint(value: unknown, parts: number): Checkpoint | null {
   if (!isRecord(value)) return null;
   const { level, score, hp } = value;
+  const shipId = validShipId(value.shipId, parts);
+  const loadout = validLoadout(value.loadout);
   if (
     typeof level !== 'number' || !Number.isInteger(level) || level < 1 || level > LEVELS.length ||
     typeof score !== 'number' || !Number.isInteger(score) || score < 0 || score > MAX_SCORE ||
-    typeof hp !== 'number' || !Number.isInteger(hp) || hp < 1 || hp > 5
+    typeof hp !== 'number' || !Number.isInteger(hp) || hp < 1 || hp > LEGACY_MAX_HP
   ) return null;
-  return { level, score, hp };
+  const normalizedHp = Math.min(hp, PLAYER_MAX_HP);
+  // Preserve old v1 boundaries; the flight code treats omitted snapshots as Strelka / balanced.
+  return value.shipId === undefined && value.loadout === undefined
+    ? { level, score, hp: normalizedHp }
+    : { level, score, hp: normalizedHp, shipId, loadout };
 }
 
 function normalizeSave(value: unknown): SaveData {
@@ -53,7 +82,15 @@ function normalizeSave(value: unknown): SaveData {
   // Unknown schema versions are intentionally not guessed at or partially migrated.
   if (!isRecord(value) || value.version !== 1) return saved;
 
-  saved.checkpoint = validCheckpoint(value.checkpoint);
+  if (isRecord(value.hangar)) {
+    saved.hangar.parts = boundedInteger(value.hangar.parts, 0, 0, SHIP_PARTS_REQUIRED);
+    saved.hangar.selectedShip = validShipId(value.hangar.selectedShip, saved.hangar.parts);
+    if (isRecord(value.hangar.loadouts)) {
+      saved.hangar.loadouts.strelka = validLoadout(value.hangar.loadouts.strelka);
+      saved.hangar.loadouts.manta = validLoadout(value.hangar.loadouts.manta);
+    }
+  }
+  saved.checkpoint = validCheckpoint(value.checkpoint, saved.hangar.parts);
   saved.bestScore = Math.max(
     boundedInteger(value.bestScore, 0, 0, MAX_SCORE),
     saved.checkpoint?.score ?? 0,

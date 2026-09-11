@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+<defs><linearGradient id="h" x2="0" y2="1"><stop stop-color="#dcacd5"/><stop offset=".45" stop-color="#8a6095"/><stop offset="1" stop-color="#3b305e"/></linearGradient><radialGradient id="g"><stop stop-color="#ed8aff" stop-opacity=".6"/><stop offset="1" stop-color="#db6fff" stop-opacity="0"/></radialGradient></defs>
+<circle cx="100" cy="100" r="93" fill="url(#g)"/>
+<path d="m100 8 27 43 23-12 12 23 30 38-30 38-12 23-23-12-27 43-27-43-23 12-12-23L8 100l30-38 12-23 23 12Z" fill="url(#h)" stroke="#edc6ed" stroke-width="2"/>
+<path d="m100 38 62 62-62 62-62-62Z" fill="#26213f" stroke="#d89eda" stroke-width="3"/>
+<path d="m100 61 39 39-39 39-39-39Z" fill="#5b3977" stroke="#ffaafa" stroke-width="2"/>
+<path d="m100 78 22 22-22 22-22-22Z" fill="#ffc5ff"/>
+<path d="M100 13v43m0 88v43M13 100h43m88 0h43" stroke="#352641" stroke-width="7"/>
+<path d="M100 17v32m0 102v32M17 100h32m102 0h32" stroke="#ffe0ff" stroke-width="3"/>
+<path d="m58 49 14 12m56 0 14-12m-84 102 14-12m56 0 14 12" stroke="#f1bbdc" stroke-width="4"/>
+<circle cx="100" cy="100" r="8" fill="#fff6eb"/>
+</svg>

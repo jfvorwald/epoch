@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSave, loadSave, persistSave, SAVE_KEY } from '../src/game/save';
+import { SHIP_PARTS_REQUIRED } from '../src/data/ships';
 
 function memoryStorage(raw: string | null = null) {
   const entries = new Map<string, string>();
@@ -63,7 +64,8 @@ describe('local save restoration', () => {
       { level: 0, score: 5, hp: 4 },
       { level: 2.5, score: 5, hp: 4 },
       { level: 2, score: 5, hp: 0 },
-      { level: 2, score: 5, hp: 6 },
+      { level: 2, score: 5, hp: 9 },
+      { level: 2, score: 5, hp: 2.5 },
       { level: 2, score: -1, hp: 4 },
       { level: 2, score: 5.5, hp: 4 },
       { level: 2, score: 1e50, hp: 4 },
@@ -106,6 +108,122 @@ describe('local save restoration', () => {
     first.unlockedTransmissions.push('open-channel');
     expect(defaultSave().preferences.music).toBe(true);
     expect(defaultSave().unlockedTransmissions).toEqual(['launch-orders']);
+    first.hangar.parts = 5;
+    first.hangar.loadouts.strelka.handling = 'agile';
+    expect(defaultSave().hangar.parts).toBe(0);
+    expect(defaultSave().hangar.loadouts.strelka.handling).toBe('balanced');
+    expect(first.hangar.loadouts.manta.handling).toBe('balanced');
+  });
+});
+
+describe('hangar progression and checkpoint migration', () => {
+  it('adds a fresh hangar to legacy v1 saves without losing records or the old checkpoint', () => {
+    const oldSave = {
+      version: 1, bestScore: 38400, furthestSector: 4,
+      checkpoint: { level: 3, score: 12200, hp: 4 },
+      unlockedTransmissions: ['launch-orders', 'cold-start', 'voss-echo'],
+      preferences: { music: false, sfx: false, reducedMotion: true },
+    };
+    const restored = loadSave(memoryStorage(JSON.stringify(oldSave)));
+    expect(restored).toEqual({ ...oldSave, checkpoint: { ...oldSave.checkpoint, hp: 3 }, hangar: defaultSave().hangar });
+  });
+
+  it('persists recovered fragments and separate ship configurations across runs', () => {
+    const storage = memoryStorage();
+    const save = defaultSave();
+    save.hangar.parts = 7;
+    save.hangar.loadouts.strelka = { handling: 'agile', reactor: 'rapid' };
+    save.hangar.loadouts.manta = { handling: 'armored', reactor: 'heavy' };
+    expect(persistSave(save, storage)).toBe(true);
+    expect(loadSave(storage)).toEqual(save);
+    save.checkpoint = null;
+    save.hangar.parts = SHIP_PARTS_REQUIRED;
+    save.hangar.selectedShip = 'manta';
+    persistSave(save, storage);
+    expect(loadSave(storage).hangar).toEqual(save.hangar);
+  });
+
+  it('migrates an old eight-hull Manta boundary to three hull while preserving its loadout snapshot', () => {
+    const storage = memoryStorage();
+    const save = defaultSave();
+    save.hangar.parts = SHIP_PARTS_REQUIRED;
+    // Selecting or customizing another ship later must not rewrite the active run.
+    save.hangar.selectedShip = 'strelka';
+    save.hangar.loadouts.manta = { handling: 'agile', reactor: 'rapid' };
+    save.checkpoint = {
+      level: 3, score: 15800, hp: 8, shipId: 'manta',
+      loadout: { handling: 'armored', reactor: 'heavy' },
+    };
+    save.bestScore = 15800;
+    save.furthestSector = 3;
+    expect(persistSave(save, storage)).toBe(true);
+    expect(loadSave(storage)).toEqual({ ...save, checkpoint: { ...save.checkpoint, hp: 3 } });
+    expect(save.checkpoint.hp).toBe(8);
+  });
+
+  it('does not equip an unfinished ship from the hangar or a checkpoint', () => {
+    const restored = loadSave(memoryStorage(JSON.stringify({
+      version: 1,
+      hangar: { selectedShip: 'manta', parts: SHIP_PARTS_REQUIRED - 1 },
+      checkpoint: { level: 2, score: 1400, hp: 4, shipId: 'manta' },
+    })));
+    expect(restored.hangar.selectedShip).toBe('strelka');
+    expect(restored.hangar.parts).toBe(SHIP_PARTS_REQUIRED - 1);
+    expect(restored.checkpoint).toEqual({
+      level: 2, score: 1400, hp: 3, shipId: 'strelka',
+      loadout: { handling: 'balanced', reactor: 'balanced' },
+    });
+  });
+
+  it('preserves every old hull value from one through eight and caps restored hull at three', () => {
+    for (let hp = 1; hp <= 8; hp++) {
+      const checkpoint = { level: 3, score: 7200, hp };
+      const restored = loadSave(memoryStorage(JSON.stringify({ version: 1, checkpoint })));
+      expect(restored.checkpoint).toEqual({ ...checkpoint, hp: Math.min(hp, 3) });
+      expect(restored.bestScore).toBe(7200);
+      expect(restored.furthestSector).toBe(3);
+    }
+  });
+
+  it('rejects checkpoint hull values beyond the legacy maximum for any configuration', () => {
+    for (const checkpoint of [
+      { level: 2, score: 50, hp: 9, shipId: 'strelka', loadout: { handling: 'agile', reactor: 'balanced' } },
+      { level: 2, score: 50, hp: 9, shipId: 'manta', loadout: { handling: 'armored', reactor: 'balanced' } },
+    ]) {
+      const restored = loadSave(memoryStorage(JSON.stringify({
+        version: 1, hangar: { parts: SHIP_PARTS_REQUIRED }, checkpoint,
+      })));
+      expect(restored.checkpoint).toBeNull();
+    }
+  });
+
+  it('sanitizes malformed fragment values without trusting numeric strings', () => {
+    for (const [parts, expected] of [[-3, 0], [4.9, 4], [800, SHIP_PARTS_REQUIRED], ['12', 0], [null, 0], [{}, 0]] as const) {
+      const restored = loadSave(memoryStorage(JSON.stringify({ version: 1, hangar: { parts } })));
+      expect(restored.hangar.parts).toBe(expected);
+    }
+    const storage = memoryStorage();
+    const save = defaultSave();
+    save.hangar.parts = Number.POSITIVE_INFINITY;
+    persistSave(save, storage);
+    expect(loadSave(storage).hangar.parts).toBe(0);
+  });
+
+  it('repairs corrupted configurations one field at a time and ignores unknown ship names', () => {
+    const restored = loadSave(memoryStorage(JSON.stringify({
+      version: 1,
+      hangar: {
+        selectedShip: '__proto__', parts: SHIP_PARTS_REQUIRED,
+        loadouts: { strelka: { handling: 'teleport', reactor: 'heavy' }, manta: { handling: 'armored', reactor: false } },
+      },
+      checkpoint: { level: 2, score: 900, hp: 4, shipId: 'prototype', loadout: { handling: 'agile', reactor: 'unlimited' } },
+    })));
+    expect(restored.hangar.selectedShip).toBe('strelka');
+    expect(restored.hangar.loadouts).toEqual({
+      strelka: { handling: 'balanced', reactor: 'heavy' },
+      manta: { handling: 'armored', reactor: 'balanced' },
+    });
+    expect(restored.checkpoint).toMatchObject({ shipId: 'strelka', loadout: { handling: 'agile', reactor: 'balanced' } });
   });
 });
 

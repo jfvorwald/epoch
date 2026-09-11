@@ -5,9 +5,12 @@
  * EPOCH_BROWSER=webkit selects installed Playwright WebKit; default is local Chrome.
  *
  * This is assisted simulation: an automated pilot reads entity coordinates and
- * moves at <=309 logical pixels/second. It uses real firing, collisions, pickups,
+ * selects armored/heavy tuning in the hangar and respects its movement speed.
+ * It uses real firing, collisions, pickups,
  * timers, damage, boss phases, and menu transitions. It never changes health,
  * enemy health, score, schedules, or outcomes. It is not a physical iPhone test.
+ * Victory assertions intentionally fail if the pilot loses; the three-hit
+ * balance is harder than the earlier campaign this pilot could reliably clear.
  */
 import assert from 'node:assert/strict';
 import { chromium, webkit } from '@playwright/test';
@@ -20,6 +23,10 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(process.env.EPOCH_BASE_URL ?? 'http://127.0.0.1:5173/');
   await page.locator('[data-action="launch"]:not(:disabled)').waitFor();
+  await page.locator('[data-action="hangar"]').click();
+  await page.locator('input[name="handling"][value="armored"]').check();
+  await page.locator('input[name="reactor"][value="heavy"]').check();
+  await page.keyboard.press('Escape');
   await page.locator('[data-action="launch"]').click();
   const run = await page.evaluate(() => {
     const { scene, game, snapshot } = window.__EPOCH__;
@@ -29,26 +36,47 @@ try {
     for (let sector = 1; sector <= 5; sector++) {
       let maxHostile = 0, maxFriendly = 0, maxEffects = 0, bossPhase = 0;
       let state;
-      for (let tick = 0; tick < 4500; tick++) {
+      for (let tick = 0; tick < 9000; tick++) {
         state = scene.getDebugState();
+        if (state.mode === 'dying') {
+          scene.update(0, 1000 / 60);
+          scene.update(0, 1000 / 60);
+          continue;
+        }
         if (state.mode !== 'combat') break;
         const p = state.player;
+        const speed = state.stats.speed;
         const targets = state.enemies.filter(enemy => enemy.y > 0 && enemy.y < 540).sort((a, b) => (b.boss ? 1000 : b.y) - (a.boss ? 1000 : a.y));
-        let desired = targets[0]?.x ?? 240;
-        // Predict nearby red projectiles crossing the pilot's altitude.
+        const aimX = targets[0]?.x ?? 240;
+        // Evaluate reachable paths against the whole incoming volley. A single-shot
+        // sidestep cannot navigate the paired guardians and elite crossfire.
+        const threats = [];
         for (const bullet of scene.bullets) {
           if (!bullet.hostile || bullet.vy <= 0) continue;
           const time = (p.y - bullet.y) / bullet.vy;
-          if (time < 0 || time > 0.7) continue;
-          const predicted = bullet.x + bullet.vx * time;
-          const diff = p.x - predicted;
-          if (Math.abs(diff) < 52) desired = p.x + (diff > 0 ? 1 : -1) * 95;
+          if (time < -0.12 || time > 1.2) continue;
+          threats.push({ time: Math.max(0, time), x: bullet.x + bullet.vx * time, radius: 25 });
         }
         for (const enemy of state.enemies) {
-          if (enemy.y > 490 && Math.abs(enemy.x - p.x) < 70) desired = p.x + (p.x > enemy.x ? 1 : -1) * 110;
           bossPhase = Math.max(bossPhase, enemy.phase);
         }
-        scene.debug('setPlayer', { x: p.x + Math.max(-10.3, Math.min(10.3, desired - p.x)), y: 654 });
+        for (const enemy of scene.enemies) {
+          if (enemy.y < 420 || enemy.boss || enemy.vy <= 0) continue;
+          const time = (p.y - enemy.y) / enemy.vy;
+          if (time < -0.1 || time > 1.2) continue;
+          threats.push({ time: Math.max(0, time), x: enemy.x + enemy.vx * time, radius: enemy.radius + 23 });
+        }
+        let desired = p.x, bestCost = Infinity;
+        for (const candidate of [p.x, aimX, ...Array.from({ length: 28 }, (_, i) => 28 + i * 424 / 27)]) {
+          let cost = Math.abs(candidate - aimX) * 0.06 + Math.abs(candidate - p.x) * 0.01;
+          for (const threat of threats) {
+            const reachable = p.x + Math.max(-speed * threat.time, Math.min(speed * threat.time, candidate - p.x));
+            const clearance = Math.abs(reachable - threat.x);
+            cost += 600 * Math.exp(-((clearance / threat.radius) ** 2)) / (0.25 + threat.time);
+          }
+          if (cost < bestCost) { bestCost = cost; desired = candidate; }
+        }
+        scene.debug('setPlayer', { x: p.x + Math.max(-speed / 30, Math.min(speed / 30, desired - p.x)), y: 654 });
         scene.update(0, 1000 / 60);
         scene.update(0, 1000 / 60);
         state = scene.getDebugState();
@@ -61,12 +89,12 @@ try {
       document.querySelector('[data-action="advance"]').click();
       if (snapshot().screen === 'transmission') document.querySelector('[data-action="transmission-next"]').click();
     }
-    return { sectors, screen: snapshot().screen, save: snapshot().save };
+    return { sectors, screen: snapshot().screen, save: snapshot().save, limits: scene.getDebugState().limits };
   });
-  assert.equal(run.sectors.length, 5, 'The automated pilot must reach all five sectors');
-  assert.ok(run.sectors.every(sector => sector.screen === 'complete'), 'All sectors complete through normal wave resolution');
+  assert.equal(run.sectors.length, 5, `The automated pilot must reach all five sectors: ${JSON.stringify(run.sectors)}`);
+  assert.ok(run.sectors.every(sector => sector.screen === 'complete'), `All sectors complete through normal wave resolution: ${JSON.stringify(run.sectors)}`);
   assert.equal(run.sectors.at(-1).bossPhase, 3, 'Boss takes real damage through all three phases');
-  assert.ok(run.sectors.every(sector => sector.maxFriendly <= 100 && sector.maxHostile <= 150 && sector.maxEffects <= 100), 'Simulation stays within entity budgets');
+  assert.ok(run.sectors.every(sector => sector.maxFriendly <= run.limits.friendly && sector.maxHostile <= run.limits.hostile && sector.maxEffects <= run.limits.effects), 'Simulation stays within entity budgets');
   assert.equal(run.screen, 'victory', 'The normal transmission and next-sector buttons reach victory');
   assert.equal(run.save.furthestSector, 5);
   assert.equal(run.save.checkpoint, null);

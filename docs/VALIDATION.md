@@ -2,7 +2,29 @@
 
 EPOCH browser publisher: **Jaq Studios**. Godot source was reviewed before implementation, not executed. The supplied reference image informed portrait composition; the new SVG artwork is original.
 
-## Automated checks
+## Three-hit hull and density revision
+
+The latest revision raises regular enemy counts to 54 / 70 / 86 / 106 / 124 with 7 / 9 / 10 / 11 / 12 total waves including each final boss. Enemy HP increases to 4–10 across the campaign; every ship/loadout has exactly three hull points. Older checkpoints retain their progress with hull capped at three.
+
+- TypeScript/Vite build and **36 unit tests pass**.
+- **18 targeted Chrome/WebKit checks pass**, including new three-real-hit regressions in normal and reduced-motion modes, frozen gameplay during the explosion, zero healing after death, 0.95-second delayed Signal lost, collision/invulnerability, pause, checkpoints, tuned ships and the boss counted as the final HUD wave.
+- A captured mid-explosion frame confirms visible debris and a burst over the unobstructed battlefield. Reduced-motion graphics remain static for the same interval.
+- The campaign verifier now waits through the death animation and allows longer encounters. Its armored/heavy pilot cleared sectors 1–2, then lost in sector 3 under the new three-hit balance; its strict victory assertion therefore fails. The previous victory measurements below apply to the earlier balance only. Human playtesting remains the balance authority.
+
+## Earlier local ship and combat update
+
+These measurements describe the earlier balance before the three-hit hull and density revision. The initial live deployment audit below is retained as historical evidence.
+
+- **35 unit tests:** old save compatibility, ship unlock validation, per-ship tuning, eight-hull Manta checkpoints, escalating content and boss composition, collision math, and input bounds.
+- **34 browser scenarios across Chrome and iPhone-profile WebKit:** baseline behavior plus hangar controls and persistence, native radio keyboard navigation, multishot stacking/expiry isolation/sector reset, weapon swaps, actual three-target lance collisions, fragment persistence, pair completion and final-fragment unlock announcement, and isolated local playtest saves. New cases live in `e2e/progression.spec.ts`.
+- **Both campaign simulations reach victory:** the pilot selects Armored/Heavy Strelka through the hangar and respects its 263.5 px/s movement speed. It predicts incoming volleys; health, damage, pickups, schedules, scores, and outcomes use normal combat logic. Chrome ended with 3/7 hull, WebKit with 2/7. Sector durations were approximately 42–98 seconds depending on pickups and browser run. Every guardian reached all three phases. Observed peaks: 20 friendly shots, 38 hostile shots, and 69 effects, below the limits of 180 / 180 / 100. The earlier simpler pilot lost on the harder campaign; these results establish reachable completion for this configuration, not human difficulty balance.
+- **Production and offline:** TypeScript/Vite build passes. Both browsers reload and launch with the isolated origin stopped, caching 40 assets including the new ship and all four miniboss SVGs. The production build has no development control object, ignores `?playtest=1`, and keeps Manta locked with an empty save. No runtime errors were reported.
+- **Current short frame sample:** Chrome measured 16.7 ms median / 17.7 ms p95; WebKit measured 33 ms median / 35 ms p95 (approximately 30 fps in this simulation). These replace the earlier baseline timing below for the local build; physical iPhone performance remains unverified.
+- **Chrome simulated touch** still passes no initial jump, relative drag, position held on lift, no scrolling, and Pause tap. Mobile visual checks at 390×844 and 320×568 confirm the notice and compact telemetry are below the player's movement range with no horizontal overflow.
+
+See [PLAYTEST.md](PLAYTEST.md) for the local review profile. No physical iPhone test or human balance approval is implied.
+
+## Prior deployed baseline checks
 
 - **23 unit tests pass:** swept collision including moving targets, zero-length overlaps, relative drag and clamping, projectile direction, content schedules, save restoration, corrupt/partial/incompatible saves, unavailable storage, and checkpoint validation.
 - **16 browser integration checks pass:** eight scenarios each in desktop Google Chrome and Playwright WebKit with an iPhone 13 profile. Coverage includes publisher/title/menu, archive unlocks, persistent settings, movement without initial jump, keyboard control, real auto-fire collisions, damage invulnerability, all four pickups, refresh/expiration, long-press Pause, frozen timers, pause/settings/resume, Escape, simulated background blur, boundary restoration, defeat/retry cleanup, selected transmissions, victory, viewport resize during a drag, corrupt saves, and honest storage-denial messaging.
