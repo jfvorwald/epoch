@@ -195,23 +195,22 @@ test('completed boundary survives reload, defeat and retry clean up', async ({ p
   expect(retried.save.checkpoint).toBeNull(); expect(retried.combat.bullets.hostile).toBe(0);
 });
 
-test('all five authored boundaries, selected transmissions and victory', async ({ page }, info) => {
+test('the opening five levels unlock chapter two and keep a continue checkpoint', async ({ page }) => {
   await launch(page);
   for (let level = 1; level <= 5; level++) {
     expect((await snapshot(page)).combat.level).toBe(level);
     await debug(page, 'complete');
     await action(page, 'advance');
-    if ([1, 3, 5].includes(level)) {
-      expect((await snapshot(page)).screen).toBe('transmission');
-      await action(page, 'transmission-next');
-    }
+    expect((await snapshot(page)).screen).toBe('transmission');
+    await action(page, 'transmission-next');
   }
-  await expect(page.locator('.panel h2')).toHaveText('You made contact.');
-  expect((await snapshot(page)).save.unlockedTransmissions).toHaveLength(4);
-  expect((await snapshot(page)).save.checkpoint).toBeNull();
-  await page.screenshot({ path: `test-results/victory-${info.project.name}.png` });
+  expect((await snapshot(page)).combat.level).toBe(6);
+  expect((await snapshot(page)).save.unlockedTransmissions).toHaveLength(6);
+  expect((await snapshot(page)).save.checkpoint.level).toBe(6);
+  await page.locator('#pause-control').click();
   await action(page, 'menu');
-  await expect(page.locator('[data-action="continue"]')).toBeDisabled();
+  await expect(page.locator('[data-action="continue"]')).toBeEnabled();
+  await expect(page.locator('[data-action="continue"]')).toContainText('LEVEL 06');
 });
 
 test('resize during drag pauses safely; corrupted saves still launch', async ({ page }) => {

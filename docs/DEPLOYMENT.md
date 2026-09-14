@@ -1,56 +1,64 @@
-# Cloudflare deployment
+# EPOCH deployment
 
-EPOCH is configured for **https://epoch.jaqstudios.com** in the domain owner’s Cloudflare account. Hosting uses **Workers Static Assets**, serving the Vite output directly without an application server, database, or paid Workers runtime.
+## Current production release
 
-Cloudflare recommends Workers for new projects. Static asset delivery is free and unlimited under its current static-hosting terms; custom domains receive managed DNS and TLS certificates. [Product guidance](https://developers.cloudflare.com/pages/get-started/), [static asset billing](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/), [custom domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
+[epoch.jaqstudios.com](https://epoch.jaqstudios.com/) runs the **Beyond the Signal** release, promoted with owner authorization on **14 September 2026 at 15:15 UTC**. Release: **`77f326db3cf3372c`**. Build: **`1.0.0 / 94e88c74bcb0`**. Production Cloudflare version: **`dd803c20-ff52-4db2-9d52-49e970c9d96f`**. Read the [formal patch notes](PATCH_NOTES.md).
 
-## Published deployment
+Promotion used the exact reviewed staging artifact, without rebuilding. All 41 public production files matched it byte-for-byte. Normal Chrome verified the updated menu, 50-level Signal Map and default-off Training Wheels after one ordinary reload. Chrome and iPhone-profile WebKit passed offline launch with the origin stopped, 41 cached assets, no runtime errors and network-only private APIs. Detailed validation is in [VALIDATION.md](VALIDATION.md).
 
-- Current release, **11 September 2026**: source commit `184feac`, Cloudflare version `50143e98-1e40-4959-abeb-31c374c1ac2e`. Fixes legacy service workers keeping returning players on an old release. All 40 public files and the root document matched the local build after deployment. The user's previously stale in-app browser tab loaded the new bundle after ordinary refreshes and displayed the Ship Hangar, locked Manta and three-hit hull. No browser storage was cleared.
-- Gameplay release, **11 September 2026**: source commit `3c8d642`, Cloudflare version `a212189c-1ed7-47f1-88f9-d71d4af39cb1`. Includes the ship hangar and Manta unlock, sector multishot and weapons, denser waves and distinct guardians, three-hit hulls, and visible destruction before defeat.
-- All **40 public production files** matched the local build after this release. Chrome and iPhone-profile WebKit passed live hangar, locked-Manta, three-hull, seven-wave first sector, launch, pause/resume, and service-worker checks with no runtime or HTTP errors. Production ignores `?playtest=1` and exposes no development controls.
-- Published on **11 September 2026** to **https://epoch.jaqstudios.com/**.
-- Application: `jaq-epoch`; initial version: `9787b439-b97c-4c85-bb27-78d93fdaa665`.
-- Workers plan confirmed in the account dashboard: **Free ($0)**. No paid upgrade, backend binding, or DigitalOcean resource was created.
-- Cloudflare also assigned `https://jaq-epoch.epoch-browser.workers.dev`. Use the custom domain as the player-facing address so saves remain on one origin.
-- All 35 public production files matched the local build after upload. HTTPS certificate validation, content types, cache headers, and exclusion of `/_headers` were checked. Initial DNS negative caching on the development Mac delayed normal hostname access; the first file audit used the authoritative address with normal TLS hostname validation.
+Production and its public provider fallback return 404 for beta session, feedback, notification and Markdown endpoints. Production has no beta database, email binding or cron. Private staging still requires Cloudflare Access. Operator-only artifacts, receipts and evidence remain under the ignored `.releases/<release-id>/` directory.
 
-Browser and physical-device coverage is recorded in [VALIDATION.md](VALIDATION.md).
+## Environments
 
-## First authorization
+| Environment | Address | Worker |
+| --- | --- | --- |
+| Private staging | https://epoch-staging.jaqstudios.com | `jaq-epoch-staging` |
+| Production | https://epoch.jaqstudios.com | `jaq-epoch` |
 
-```sh
-pnpm install --frozen-lockfile
-pnpm exec wrangler login --scopes account:read user:read workers_scripts:write workers_routes:write zone:read
-```
+Staging is the default release target. Ordinary update requests authorize private staging; production promotion requires explicit owner authorization of the reviewed release. Protect every staging path with Access and keep its provider fallback and preview URLs disabled. Staging and production must use separate data, identity and email configuration.
 
-Approve the official Cloudflare authorization page using the account that owns `jaqstudios.com`. Wrangler stores the resulting authorization locally outside the repository. Do not paste tokens into source or commit local authentication files.
+## Local setup and private settings
 
-## Publish or update
+Install the lockfile dependencies with `pnpm install --frozen-lockfile`. Use the project's installed Wrangler through the release scripts. Authenticate through the official Cloudflare login flow with only the existing account, user, Workers-script, Workers-route and zone permissions needed to deploy. Credentials stay outside source control.
+
+Copy [cloudflare/staging.example.json](../cloudflare/staging.example.json) to `.private/staging.json` and replace placeholders with the approved operator values. This ignored file contains exact beta identities and Access, D1 and restricted email settings. Keep its file permissions private. The release helper accepts a narrow staging-only override, checks completeness and isolation, and derives email recipient/sender pins from the restricted binding. It rejects attempts to override production, routes, Worker names or enable flags.
+
+A public checkout can build and test without private settings. Preparing an enabled-beta staging deployment requires valid private settings. Use the release helper: a direct `wrangler deploy` cannot merge the private file. Do not use a direct deployment to bypass validation. See [BETA.md](BETA.md) for access maintenance, owner notifications and migration safeguards.
+
+## Stage, review and promote
 
 ```sh
 pnpm deploy:check
 pnpm deploy
 ```
 
-`deploy:check` compiles the complete production game and validates Cloudflare packaging without uploading. `deploy` rebuilds and publishes it. `wrangler.jsonc` defines the `jaq-epoch` application, the `dist/` asset directory, and the custom domain. Only `epoch.jaqstudios.com` is attached; the apex domain, `www`, and mail records are not changed by this configuration.
+Both commands run tests and a production-mode build. Staging freezes public assets, the Worker, resolved configuration and migrations in `.releases/<release-id>/`. A successful upload records its receipt. A dry run does not count as a staged release. Never commit `.private/`, `.releases/`, authentication files, private feedback or invitation records.
 
-These commands use the existing local checkout, so review its changes before deploying. The source repository is `jfvorwald/epoch`; automatic deployment on Git pushes is not configured. A future Cloudflare Git integration can run `pnpm build` and then `pnpm exec wrangler deploy` using this same configuration.
+Review the staging URL using the approved sign-in. Its visible STAGING label includes the version and build. Review menus, gameplay and saved progress as appropriate to the change. An existing tab may show its old game until an ordinary reload; never clear player storage to load a release.
 
-## Caching and iPhone installation
+After explicit approval of that release:
 
-`public/_headers` asks browsers to revalidate the document and service worker while caching Vite’s content-hashed assets immutably. Unhashed art and fonts use Cloudflare’s normal revalidation behavior.
+```sh
+pnpm deploy:production:check <release-id>
+pnpm deploy:production <release-id>
+```
 
-The offline cache excludes `_headers` and `_redirects` because Cloudflare consumes those control files instead of serving them. Every build gets a new service-worker revision. It activates once its complete offline cache is ready, even if old game tabs remain open. Existing flights keep their loaded document; refresh to load the updated game. Subsequent updates show a brief refresh notice.
+Promotion verifies the successful staging receipt, artifact digests and Wrangler version, then publishes the frozen artifact through its production environment. It does not rebuild the checkout or merge a newer private configuration. Public game assets are identical; the hostname controls the staging indicator and beta interface. Git pushes do not automatically deploy this app.
 
-Page navigations request the latest online HTML and fall back to the complete precached shell if the server is unavailable. Static assets use the current revision's cache, and activation removes obsolete game caches. Saves and settings in local storage are retained. `node scripts/verify-update.mjs` checks legacy-worker migration in Chrome and WebKit; `node scripts/verify-production.mjs` checks offline launch with the origin stopped.
+The source repository is public. Keep operational contact records in ignored private storage and review every commit before an upstream push. Removing private data from a later commit does not remove it from earlier history; unpublished commits containing those records must not become ancestors of a public push. Retain any recovery copies locally.
 
-After HTTPS is live, open the game in iPhone Safari, finish its first online load, and use **Share → Add to Home Screen**. Saves belong to this HTTPS origin, so development saves at localhost or a Wi-Fi address do not automatically transfer.
+## Saved progress, caching and verification
 
-## Verification and rollback
+The service worker precaches a complete release before activation. Existing flights keep running until the player reloads. Navigations fetch current online HTML and fall back to the completed offline cache; static assets use the active release cache. Private API and Access routes always go to the network. The document and service worker revalidate, while hashed assets are immutable. Saves remain in the existing browser-origin local storage.
 
-After deployment, check the custom domain’s HTTPS response, title, asset loading, `/sw.js` cache policy, and manifest. Verify service-worker activation and offline reload in a browser. A newly registered domain or new TLS certificate may need time to become active.
+After promotion, verify the custom domain and provider fallback, asset hashes, build metadata, service-worker cache headers, disabled private endpoints, staging protection and a normal browser load. `node scripts/verify-production.mjs` checks offline launch in isolated Chrome/WebKit contexts. `node scripts/verify-update.mjs` checks migration from an old cache-first release while preserving saved progress. These simulations do not replace physical-device or human difficulty testing.
 
-For a rollback, open **Cloudflare → Workers & Pages → jaq-epoch → Deployments**, select the previous known-good deployment, and roll back. Refresh the game to load it. When rolling back to a release predating the cache-update fix, close all game tabs and reopen if its worker is waiting to activate.
+On iPhone, finish an online load in Safari, then use **Share → Add to Home Screen**. Staging and production saves are separate because they use different origins. A Google identity used for beta access does not synchronize game saves.
 
-DigitalOcean remains suitable for future server-backed services. This static game does not require adding or modifying any DigitalOcean resources.
+## Rollback and recovery
+
+Use the previous verified deployment in Cloudflare's `jaq-epoch` deployment history or promote another explicitly approved retained artifact. The production version preceding this campaign release is `50143e98-1e40-4959-abeb-31c374c1ac2e`; its loader only accepts the original five levels. Review save compatibility before restoring it. Prefer a corrected release retaining current campaign and save rules.
+
+Never clear player storage or recreate staging D1 as a rollback step. Keep reports and sent email receipts. Preserve the current private roster when preparing a replacement staging release; older frozen artifacts may contain older access lists.
+
+A DNS or TLS navigation error is distinct from an old cached game. Check normal name resolution and hosting without disabling Access or browser protections. For an old menu, finish or pause the current flight, reload online, allow the new cache to complete, then reload once more if prompted. Keep saved progress intact.

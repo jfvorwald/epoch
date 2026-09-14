@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSave, loadSave, persistSave, SAVE_KEY } from '../src/game/save';
 import { SHIP_PARTS_REQUIRED } from '../src/data/ships';
+import { MAX_LEVEL_NUMBER } from '../src/data/config';
+import { TRANSMISSIONS } from '../src/data/transmissions';
 
 function memoryStorage(raw: string | null = null) {
   const entries = new Map<string, string>();
@@ -16,10 +18,10 @@ describe('local save restoration', () => {
     const storage = memoryStorage();
     const original = defaultSave();
     original.bestScore = 15400;
-    original.furthestSector = 4;
+    original.furthestLevel = 4;
     original.checkpoint = { level: 4, score: 9800, hp: 3 };
-    original.preferences = { music: false, sfx: true, reducedMotion: true };
-    original.unlockedTransmissions = ['launch-orders', 'cold-start', 'voss-echo'];
+    original.preferences = { music: false, sfx: true, reducedMotion: true, trainingWheels: true };
+    original.unlockedTransmissions = TRANSMISSIONS.filter(t => t.afterLevel <= 3).map(t => t.id);
 
     expect(persistSave(original, storage)).toBe(true);
     const restored = loadSave(storage);
@@ -42,7 +44,7 @@ describe('local save restoration', () => {
     })));
     expect(restored.bestScore).toBe(1200);
     expect(restored.checkpoint).toBeNull();
-    expect(restored.preferences).toEqual({ music: false, sfx: true, reducedMotion: true });
+    expect(restored.preferences).toEqual({ music: false, sfx: true, reducedMotion: true, trainingWheels: false });
     expect(restored.unlockedTransmissions).toEqual(['launch-orders']);
   });
 
@@ -50,17 +52,39 @@ describe('local save restoration', () => {
     const restored = loadSave(memoryStorage(JSON.stringify({
       version: 1,
       bestScore: -20,
-      furthestSector: 600,
+      furthestLevel: -600,
       unlockedTransmissions: ['cold-start', 'cold-start', 4, '__proto__', 'unreleased-epoch'],
     })));
     expect(restored.bestScore).toBe(0);
-    expect(restored.furthestSector).toBe(5);
+    expect(restored.furthestLevel).toBe(1);
     expect(restored.unlockedTransmissions).toEqual(['launch-orders', 'cold-start']);
   });
 
-  it('discards incomplete, fractional, dead, or out-of-campaign checkpoints', () => {
+  it('keeps Training Wheels off for older or malformed preferences without changing player progress', () => {
+    const original = defaultSave();
+    original.bestScore = 123456;
+    original.furthestLevel = 51;
+    original.checkpoint = { level: 51, score: 98765, hp: 2, shipId: 'manta', loadout: { handling: 'agile', reactor: 'heavy' } };
+    original.unlockedTransmissions = TRANSMISSIONS.map(entry => entry.id);
+    original.hangar.parts = SHIP_PARTS_REQUIRED;
+    original.hangar.selectedShip = 'manta';
+    original.hangar.loadouts.manta = { handling: 'agile', reactor: 'heavy' };
+    original.preferences = { music: false, sfx: false, reducedMotion: true, trainingWheels: false };
+
+    for (const value of [undefined, null, 'true', 'false', 1, 0, [], {}]) {
+      const storage = memoryStorage(JSON.stringify({
+        ...original, preferences: { ...original.preferences, trainingWheels: value },
+      }));
+      const restored = loadSave(storage);
+      expect(restored).toEqual(original);
+      expect(persistSave(restored, storage)).toBe(true);
+      expect(loadSave(storage)).toEqual(original);
+    }
+  });
+
+  it('discards incomplete, fractional, dead, or numerically unsafe checkpoints', () => {
     const invalid = [
-      { level: 6, score: 5, hp: 4 },
+      { level: MAX_LEVEL_NUMBER + 1, score: 5, hp: 4 },
       { level: 0, score: 5, hp: 4 },
       { level: 2.5, score: 5, hp: 4 },
       { level: 2, score: 5, hp: 0 },
@@ -83,11 +107,11 @@ describe('local save restoration', () => {
     const restored = loadSave(memoryStorage(JSON.stringify({
       version: 1,
       bestScore: 10,
-      furthestSector: 1,
+      furthestLevel: 1,
       checkpoint: { level: 5, score: 20000, hp: 1 },
     })));
     expect(restored.bestScore).toBe(20000);
-    expect(restored.furthestSector).toBe(5);
+    expect(restored.furthestLevel).toBe(5);
     expect(restored.checkpoint).toEqual({ level: 5, score: 20000, hp: 1 });
   });
 
@@ -95,8 +119,8 @@ describe('local save restoration', () => {
     const storage = memoryStorage();
     const completed = defaultSave();
     completed.bestScore = 42000;
-    completed.furthestSector = 5;
-    completed.unlockedTransmissions.push('cold-start', 'voss-echo', 'open-channel');
+    completed.furthestLevel = 5;
+    completed.unlockedTransmissions = TRANSMISSIONS.filter(t => t.afterLevel <= 5).map(t => t.id);
     completed.checkpoint = null;
     persistSave(completed, storage);
     expect(loadSave(storage)).toEqual(completed);
@@ -125,7 +149,34 @@ describe('hangar progression and checkpoint migration', () => {
       preferences: { music: false, sfx: false, reducedMotion: true },
     };
     const restored = loadSave(memoryStorage(JSON.stringify(oldSave)));
-    expect(restored).toEqual({ ...oldSave, checkpoint: { ...oldSave.checkpoint, hp: 3 }, hangar: defaultSave().hangar });
+    const { furthestSector, ...legacyFields } = oldSave;
+    expect(restored).toEqual({ ...legacyFields, preferences: { ...oldSave.preferences, trainingWheels: false }, furthestLevel: furthestSector, checkpoint: { ...oldSave.checkpoint, hp: 3 }, hangar: defaultSave().hangar, unlockedTransmissions: TRANSMISSIONS.filter(t => t.afterLevel <= 3).map(t => t.id) });
+  });
+
+  it('continues completed legacy five-level saves into level six', () => {
+    const restored = loadSave(memoryStorage(JSON.stringify({
+      version: 1, furthestSector: 5, bestScore: 50000, checkpoint: null,
+      unlockedTransmissions: ['launch-orders', 'cold-start', 'voss-echo', 'open-channel'],
+    })));
+    expect(restored.furthestLevel).toBe(6);
+    expect(restored.checkpoint).toMatchObject({ level: 6, score: 0, hp: 3, shipId: 'strelka' });
+    expect(restored.bestScore).toBe(50000);
+    expect(restored).not.toHaveProperty('furthestSector');
+    expect(restored.unlockedTransmissions).toEqual(TRANSMISSIONS.filter(t => t.afterLevel <= 5).map(t => t.id));
+  });
+
+  it('preserves late-story and endless checkpoints without wrapping to level one', () => {
+    for (const level of [6, 49, 50, 51, 100, 1000, 1000000]) {
+      const storage = memoryStorage();
+      const saved = defaultSave();
+      saved.checkpoint = { level, score: 1_000_000_050, hp: 2 };
+      saved.furthestLevel = level;
+      expect(persistSave(saved, storage)).toBe(true);
+      const restored = loadSave(storage);
+      expect(restored.checkpoint).toEqual(saved.checkpoint);
+      expect(restored.furthestLevel).toBe(level);
+      expect(restored.unlockedTransmissions).toEqual(TRANSMISSIONS.filter(t => t.afterLevel < level).map(t => t.id));
+    }
   });
 
   it('persists recovered fragments and separate ship configurations across runs', () => {
@@ -155,9 +206,9 @@ describe('hangar progression and checkpoint migration', () => {
       loadout: { handling: 'armored', reactor: 'heavy' },
     };
     save.bestScore = 15800;
-    save.furthestSector = 3;
+    save.furthestLevel = 3;
     expect(persistSave(save, storage)).toBe(true);
-    expect(loadSave(storage)).toEqual({ ...save, checkpoint: { ...save.checkpoint, hp: 3 } });
+    expect(loadSave(storage)).toEqual({ ...save, checkpoint: { ...save.checkpoint, hp: 3 }, unlockedTransmissions: TRANSMISSIONS.filter(t => t.afterLevel < 3).map(t => t.id) });
     expect(save.checkpoint.hp).toBe(8);
   });
 
@@ -181,7 +232,7 @@ describe('hangar progression and checkpoint migration', () => {
       const restored = loadSave(memoryStorage(JSON.stringify({ version: 1, checkpoint })));
       expect(restored.checkpoint).toEqual({ ...checkpoint, hp: Math.min(hp, 3) });
       expect(restored.bestScore).toBe(7200);
-      expect(restored.furthestSector).toBe(3);
+      expect(restored.furthestLevel).toBe(3);
     }
   });
 

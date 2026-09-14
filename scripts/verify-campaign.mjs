@@ -1,5 +1,5 @@
 /**
- * Accelerated browser simulation of all five authored sectors.
+ * Accelerated browser simulation of the opening five authored levels.
  * Start Vite first. Run: node scripts/verify-campaign.mjs
  * EPOCH_BASE_URL defaults to http://127.0.0.1:5173.
  * EPOCH_BROWSER=webkit selects installed Playwright WebKit; default is local Chrome.
@@ -32,8 +32,8 @@ try {
     const { scene, game, snapshot } = window.__EPOCH__;
     // Drive the actual Scene update with a fixed dt, independent of rendering.
     game.loop.stop();
-    const sectors = [];
-    for (let sector = 1; sector <= 5; sector++) {
+    const levels = [];
+    for (let level = 1; level <= 5; level++) {
       let maxHostile = 0, maxFriendly = 0, maxEffects = 0, bossPhase = 0;
       let state;
       for (let tick = 0; tick < 9000; tick++) {
@@ -84,20 +84,20 @@ try {
         maxFriendly = Math.max(maxFriendly, state.bullets.friendly);
         maxEffects = Math.max(maxEffects, state.effects);
       }
-      sectors.push({ sector, seconds: Math.round(state.elapsed * 10) / 10, hp: state.hp, kills: state.kills, score: state.score, screen: snapshot().screen, maxHostile, maxFriendly, maxEffects, bossPhase });
+      levels.push({ level, seconds: Math.round(state.elapsed * 10) / 10, hp: state.hp, kills: state.kills, score: state.score, screen: snapshot().screen, maxHostile, maxFriendly, maxEffects, bossPhase });
       if (snapshot().screen !== 'complete') break;
       document.querySelector('[data-action="advance"]').click();
       if (snapshot().screen === 'transmission') document.querySelector('[data-action="transmission-next"]').click();
     }
-    return { sectors, screen: snapshot().screen, save: snapshot().save, limits: scene.getDebugState().limits };
+    return { levels, screen: snapshot().screen, save: snapshot().save, limits: scene.getDebugState().limits };
   });
-  assert.equal(run.sectors.length, 5, `The automated pilot must reach all five sectors: ${JSON.stringify(run.sectors)}`);
-  assert.ok(run.sectors.every(sector => sector.screen === 'complete'), `All sectors complete through normal wave resolution: ${JSON.stringify(run.sectors)}`);
-  assert.equal(run.sectors.at(-1).bossPhase, 3, 'Boss takes real damage through all three phases');
-  assert.ok(run.sectors.every(sector => sector.maxFriendly <= run.limits.friendly && sector.maxHostile <= run.limits.hostile && sector.maxEffects <= run.limits.effects), 'Simulation stays within entity budgets');
-  assert.equal(run.screen, 'victory', 'The normal transmission and next-sector buttons reach victory');
-  assert.equal(run.save.furthestSector, 5);
-  assert.equal(run.save.checkpoint, null);
+  assert.equal(run.levels.length, 5, `The automated pilot must reach all five levels: ${JSON.stringify(run.levels)}`);
+  assert.ok(run.levels.every(level => level.screen === 'complete'), `All levels complete through normal wave resolution: ${JSON.stringify(run.levels)}`);
+  assert.equal(run.levels.at(-1).bossPhase, 3, 'Boss takes real damage through all three phases');
+  assert.ok(run.levels.every(level => level.maxFriendly <= run.limits.friendly && level.maxHostile <= run.limits.hostile && level.maxEffects <= run.limits.effects), 'Simulation stays within entity budgets');
+  assert.equal(run.screen, 'playing', 'The opening chapter continues into level six');
+  assert.equal(run.save.furthestLevel, 6);
+  assert.equal(run.save.checkpoint.level, 6);
   assert.ok(run.save.unlockedTransmissions.includes('open-channel'));
   assert.deepEqual(errors, [], 'No browser runtime errors');
   console.log(JSON.stringify({ browser: browserName, validation: 'assisted accelerated simulation; no health or outcome overrides', ...run, errors }, null, 2));

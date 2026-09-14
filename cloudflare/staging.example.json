@@ -1,0 +1,20 @@
+{
+  "vars": {
+    "BETA_OWNER": "beta-owner@example.invalid",
+    "BETA_TESTERS": "beta-owner@example.invalid,tester@example.invalid",
+    "BETA_EMAIL_FROM": "feedback@example.invalid",
+    "ACCESS_TEAM_DOMAIN": "YOUR_TEAM.cloudflareaccess.com",
+    "ACCESS_AUD": "REPLACE_WITH_ACCESS_APPLICATION_AUDIENCE"
+  },
+  "d1_databases": [{
+    "binding": "BETA_DB",
+    "database_name": "your-staging-beta",
+    "database_id": "REPLACE_WITH_STAGING_DATABASE_UUID",
+    "migrations_dir": "./cloudflare/migrations"
+  }],
+  "send_email": [{
+    "name": "BETA_EMAIL",
+    "destination_address": "beta-owner@example.invalid",
+    "allowed_sender_addresses": ["feedback@example.invalid"]
+  }]
+}

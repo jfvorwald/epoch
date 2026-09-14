@@ -26,6 +26,8 @@ playwright-report/
 .sites-runtime/
 .pnpm-store/
 .wrangler/
+.releases/
 .dev.vars
 .env
 .env.local
+/.private/

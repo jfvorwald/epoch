@@ -14,9 +14,15 @@ const distRoot = fileURLToPath(new URL('../dist/', import.meta.url)).replace(/\/
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json', '.txt': 'text/plain' };
 
 async function serveBuild() {
+  let sessionReads = 0;
   const server = createServer(async (request, response) => {
     try {
       const path = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+      if (path === '/api/beta/session') {
+        response.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+        response.end(JSON.stringify({ sessionRead: ++sessionReads }));
+        return;
+      }
       const file = resolve(distRoot, '.' + (path === '/' ? '/index.html' : path));
       if (!file.startsWith(distRoot + sep)) { response.writeHead(403).end(); return; }
       const data = await readFile(file);
@@ -64,9 +70,33 @@ for (const engine of ['chrome', 'webkit']) {
     assert.ok(cacheCount > 25, 'offline cache includes art, code, icons, and fonts');
     const cachedArt = await page.evaluate(async () => Promise.all(['manta', 'boss-warden', 'boss-twins', 'boss-carrier', 'boss-lattice'].map(async name => !!await caches.match(`/art/${name}.svg`))));
     assert.ok(cachedArt.every(Boolean), 'New ship and all miniboss artwork are cached');
+    const sessionReads = await page.evaluate(async () => {
+      const results = [];
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const response = await fetch('/api/beta/session');
+        results.push({ status: response.status, type: response.headers.get('content-type'), body: await response.json() });
+      }
+      return results;
+    });
+    assert.deepEqual(sessionReads, [
+      { status: 200, type: 'application/json', body: { sessionRead: 1 } },
+      { status: 200, type: 'application/json', body: { sessionRead: 2 } },
+    ], 'Private API reads reach the origin each time while the service worker controls the page');
+    const cachedApiRequests = await page.evaluate(async () => {
+      const requests = await Promise.all((await caches.keys()).map(async key => (await caches.open(key)).keys()));
+      return requests.flat().map(request => new URL(request.url).pathname).filter(path => path.startsWith('/api/'));
+    });
+    assert.deepEqual(cachedApiRequests, [], 'No private API response is stored in CacheStorage');
     await origin.stop();
     await page.reload();
     await page.waitForFunction(() => !!document.querySelector('[data-action="launch"]') && !document.querySelector('[data-action="launch"]').disabled);
+    const offlineApi = await page.evaluate(async () => {
+      try {
+        const response = await fetch('/api/beta/session');
+        return { rejected: false, status: response.status, body: await response.text() };
+      } catch { return { rejected: true }; }
+    });
+    assert.deepEqual(offlineApi, { rejected: true }, 'Offline private API reads fail instead of returning a cached session or the game shell');
     await page.locator('[data-action="launch"]').click();
     await page.locator('#pause-control').waitFor({ state: 'visible' });
     await page.waitForTimeout(4000);
@@ -78,6 +108,6 @@ for (const engine of ['chrome', 'webkit']) {
     }));
     await page.screenshot({ path: `/tmp/epoch-production-offline-${engine}.png` });
     assert.deepEqual(errors, [], 'no browser runtime errors');
-    console.log(JSON.stringify({ engine, offlineLaunch: true, offlineMethod: 'origin server stopped; ordinary HTTP cache disabled', cachedAssets: cacheCount, frameTiming: timing, runtimeErrors: errors }));
+    console.log(JSON.stringify({ engine, offlineLaunch: true, privateApiNetworkOnly: true, offlineMethod: 'origin server stopped; ordinary HTTP cache disabled', cachedAssets: cacheCount, frameTiming: timing, runtimeErrors: errors }));
   } finally { await browser.close(); await origin.stop(); }
 }

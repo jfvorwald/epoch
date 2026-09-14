@@ -11,7 +11,7 @@ describe('ship identities and progression', () => {
     expect(isShipUnlocked('manta', SHIP_PARTS_REQUIRED)).toBe(true);
     expect(isShipUnlocked('manta', Number.NaN)).toBe(false);
     expect(isShipUnlocked('manta', Number.POSITIVE_INFINITY)).toBe(false);
-    // Only one roll per cleared sector; even five perfect runs should not be the average unlock.
+    // Only one roll per cleared level; even five perfect runs should not be the average unlock.
     expect(SHIP_PART_DROP_CHANCE).toBeGreaterThan(0);
     expect(SHIP_PARTS_REQUIRED / (5 * SHIP_PART_DROP_CHANCE)).toBeGreaterThan(10);
   });

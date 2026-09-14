@@ -1,0 +1,9 @@
+# JAQ Studios welcome-email logo
+
+`jaq-studios-logo-approved.png` is the JAQ Studios logo approved by Jack on 13 September 2026 for EPOCH beta invitations. It uses a navy monogram and wordmark on an opaque ivory background, with a small TM mark. The lower diagonal segment of the left monogram was revised to match the A's right-hand angle while retaining the small separation.
+
+Generated and revised with the built-in image generation tool. The final source image is `exec-8a1e8384-3ad7-47c3-9b4c-ad93b3f6c2ff.png` in the conversation's generated-image folder. This approved copy is preserved in the repository; it is not included in the game build.
+
+Final revision prompt:
+
+> Precise logo geometry correction to this FIRST JAQ Studios design. Preserve everything except the LOWER diagonal segment of the large LEFT monogram. The small ivory horizontal separation across the A's descending leg MUST remain, exactly like the first design. Above this gap, the outer right edge of the A descends at roughly 60 degrees from horizontal. Below the gap, the tail currently changes direction to roughly 45 degrees and projects too far right. Fix this mismatch: make the lower tail descend at the SAME 60-degree slope as the upper A leg, with its outer right edge exactly collinear with the upper A's right edge, as if a straight ruler laid from the A's apex continued across the tiny ivory gap to the bottom foot. Make the lower segment's left edge parallel as well, keeping the same stroke thickness. This means the bottom tip shifts LEFT, and the lower diagonal becomes steeper. DO NOT remove the small separating gap. DO NOT alter the upper A, J, circular Q except the minimal joint where the revised tail joins it. Keep the right-hand JAQ STUDIOS wordmark and TM, all layout, scale, ink color, background, and canvas unchanged. Keep opaque warm ivory background. No redesign, no extra elements.

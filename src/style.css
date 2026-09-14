@@ -33,3 +33,222 @@
 .playtest-badge{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:19;padding:4px 8px;white-space:nowrap;font:6px/1.2 'IBM Plex Mono',monospace;letter-spacing:.65px;color:#e8c183;background:#392b19ed;border:1px solid #d6af7933;border-top:0;pointer-events:none}.playtest-controls{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:7px 0;margin-bottom:7px;border-bottom:1px solid #d6af7925;font:7px 'IBM Plex Mono',monospace;letter-spacing:.4px;color:var(--amber);pointer-events:auto}.playtest-controls select{max-width:73%;border:1px solid #d6af7940;background:#1e1a26;color:#c7b7a1;font:7px 'IBM Plex Mono',monospace;padding:7px;pointer-events:auto;border-radius:0}.playtest-controls select:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}.hangar-panel .playtest-controls{margin-bottom:14px}
 
 .salvage-result{border:1px solid #d6af7955;background:#d6af790c;padding:14px;margin:18px 0;color:var(--amber);font:10px/1.6 'IBM Plex Mono',monospace}.salvage-result b{display:block;font-weight:500;letter-spacing:1px}.salvage-result span{display:block;color:#c6c1ca;font:11px/1.6 'Barlow',sans-serif;margin-top:5px}
+
+/* The review label sits above the HUD without consuming touch or pointer input. */
+.staging-badge{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:19;max-width:94%;padding:3px 7px;white-space:nowrap;font:clamp(6px,1.55cqw,8px)/1.2 'IBM Plex Mono',monospace;letter-spacing:.35px;color:#f5d39e;background:#392b19ed;border:1px solid #d6af794d;border-top:0;pointer-events:none}
+
+/* Ship editing and salvage are visible before launch and in every overlay. */
+.menu-ship-card{margin-bottom:9px;border:1px solid #d6af7966;background:linear-gradient(115deg,#302637ed,#171723ed)}
+.edit-ship-button{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:52px;padding:11px 13px;background:transparent;text-align:left;color:#f0d3a8}
+.edit-ship-button b{display:block;font:600 clamp(13px,3.5cqw,17px) 'Barlow Condensed',sans-serif;letter-spacing:1.5px}
+.edit-ship-button small{display:block;margin-top:4px;font:clamp(6px,1.55cqw,8px)/1.5 'IBM Plex Mono',monospace;color:#b7acbb;text-transform:uppercase;letter-spacing:.2px}
+.edit-ship-arrow{font-size:23px;color:var(--amber)}
+.parts-inventory{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 11px;margin:14px 0 18px;border:1px solid #d6af7933;background:#d6af7907;font-family:'IBM Plex Mono',monospace}
+.parts-inventory-count{display:flex;align-items:center;gap:9px;white-space:nowrap}
+.parts-inventory-count>span{font-size:7px;letter-spacing:.7px;color:#c7b89e}
+.parts-inventory-count strong{font-size:16px;font-weight:500;color:#f2d0a1}
+.parts-inventory-count strong small{font-size:9px;font-weight:400;color:#b1a38f}
+.parts-inventory-project{flex:1;max-width:46%;text-align:right;min-width:0}
+.parts-inventory-project>b{display:block;font-size:6px;font-weight:400;letter-spacing:.6px;color:#c7b89e}
+.parts-inventory-meter{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;margin-top:5px}
+.parts-inventory-meter i{height:3px;background:#d6af792c}
+.parts-inventory-meter .collected{background:var(--amber)}
+.parts-inventory.complete{border-color:#87ddd634}
+.parts-inventory.complete .parts-inventory-project>b{color:var(--cyan)}
+.parts-inventory.complete .parts-inventory-meter .collected{background:var(--cyan)}
+.menu-parts{margin:0;border:0;border-top:1px solid #d6af7927;padding:8px 13px;background:#0d0e1666}
+.menu-parts .parts-inventory-count>span{font-size:7px}
+.menu-parts .parts-inventory-count strong{font-size:16px}
+.menu-parts .parts-inventory-project>b{font-size:6px}
+.menu-actions .menu-records{margin-top:17px}
+.menu-actions .menu-hint{margin-top:16px}
+.in-menu .hero-ship{top:25%;height:28%;width:33%;left:33.5%}
+.in-menu .hero-ship.manta{top:25%;height:25%;width:45%;left:27.5%}
+.menu-secondary .secondary-button:first-child{border-color:#a693b743;color:#ded7e8}
+.hangar-panel .parts-inventory{margin:12px 0}
+.paused-weapon{font:8px/1.8 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--amber);margin:14px 0}
+.hud-parts{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:9px;font:clamp(7px,1.6cqw,8px)/1.4 'IBM Plex Mono',monospace;color:#b8ac99;letter-spacing:.3px}
+.hud-parts b{font-weight:500;color:#f1d2a4;margin-left:6px}
+.hud-parts small{font-size:.8em;color:#ad9c85}
+.hud-sector .wave-counter{font-size:clamp(6px,1.6cqw,8px);white-space:nowrap}
+.hud-sector .wave-counter.debris{color:#f5ce94}
+.hud-sector .wave-counter.guardian{color:#ff9fab}
+.flight-telemetry{width:48%;bottom:2.5%;padding:6px 7px;background:linear-gradient(90deg,#121321ed,#151320ab);border-left:1px solid #87ddd639}
+.weapon-readout{font-size:clamp(6px,1.6cqw,8px);gap:4px;white-space:nowrap}
+.weapon-readout b{overflow:hidden;text-overflow:ellipsis}
+.weapon-readout>span{font-size:.85em;margin-left:auto;white-space:nowrap}
+.weapon-power-readout{margin-top:6px;font:clamp(6px,1.45cqw,7px)/1.5 'IBM Plex Mono',monospace;letter-spacing:.25px}
+.weapon-power-readout>div:first-child{display:flex;align-items:baseline;gap:5px}
+.weapon-power-readout b{font-size:clamp(11px,3.3cqw,16px);font-weight:500;color:#d1cbdc}
+.weapon-power-readout b small{font-size:.65em;font-weight:400;color:#948b9d}
+.weapon-power-readout em{font-size:.75em;font-style:normal;color:#aaa0b0;margin-left:auto;white-space:nowrap}
+.weapon-power-readout.upgraded b{color:var(--amber)}
+.weapon-power-readout.maxed em{color:var(--cyan);font-weight:600}
+.supercharge-readout{display:flex;align-items:baseline;justify-content:space-between;gap:4px;margin:4px 0;color:var(--amber)}
+.weapon-power-readout .supercharge-readout b{font:inherit;font-weight:600;color:var(--amber);letter-spacing:.2px}
+.supercharge-readout small{font:inherit;color:#f9df9b}
+.weapon-power-meter{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;margin:4px 0 5px}
+.weapon-power-meter i{height:4px;background:#bba8cf24}
+.weapon-power-meter i:nth-child(8){margin-left:2px}
+.weapon-power-meter .collected{background:var(--cyan)}
+.weapon-power-meter .collected.blast{background:var(--amber)}
+.blast-readout{display:flex;justify-content:space-between;font-size:.85em;color:#cfb18d}
+.blast-readout small{font-size:inherit;color:#aaa0b0}
+@media(max-width:600px){.parts-inventory-count>span{font-size:7px}.parts-inventory-count strong{font-size:15px}.parts-inventory{gap:9px}.hud-parts{margin-top:7px}.menu-ship-card{margin-bottom:7px}.edit-ship-button{min-height:48px;padding:9px 12px}.menu-parts{padding:7px 12px}.menu-actions .menu-records{margin-top:13px}.menu-actions .menu-hint{margin-top:12px}}
+@media(max-height:710px){.edit-ship-button{min-height:43px;padding:8px 11px}.menu-parts{padding:6px 11px}.menu-actions .menu-records{margin-top:11px}.menu-actions .menu-hint{margin-top:10px}.menu-ship-card{margin-bottom:6px}}
+@media(orientation:landscape) and (max-height:540px){.in-menu .hero-ship,.in-menu .hero-ship.manta{top:26%;height:20%}.edit-ship-button{min-height:30px;padding:5px 8px}.edit-ship-button b{font-size:11px}.edit-ship-button small{font-size:5px;margin-top:2px}.edit-ship-arrow{font-size:16px}.menu-parts{padding:4px 8px}.menu-parts .parts-inventory-count>span{font-size:5px}.menu-parts .parts-inventory-count strong{font-size:10px}.menu-parts .parts-inventory-count strong small{font-size:7px}.menu-parts .parts-inventory-project>b{font-size:4px}.parts-inventory-meter{gap:2px;margin-top:3px}.parts-inventory-meter i{height:2px}.parts-inventory{padding:7px;margin:8px 0;gap:7px}.parts-inventory-count{gap:5px}.parts-inventory-count>span{font-size:5px}.parts-inventory-count strong{font-size:12px}.parts-inventory-project>b{font-size:5px}.hud-parts{font-size:5px;margin-top:5px}.hud-sector .wave-counter{font-size:5px}.flight-telemetry{padding:4px}.weapon-power-readout{margin-top:3px;font-size:4px}.weapon-readout{font-size:5px}.weapon-power-meter{gap:2px;margin:2px 0}.weapon-power-meter i{height:2px}.hud-sector>span:first-child b{display:none}}
+
+/* The first branch stays on the flight deck; the full campaign unfolds on demand. */
+.signal-branch-preview{position:relative;display:flex;align-items:center;gap:7px;padding:0 0 15px 10px;margin-top:-6px;color:#888294}.signal-branch-preview>span{width:5px;height:19px;border-left:1px solid #8c79a452;border-bottom:1px solid #8c79a452;margin-right:3px;align-self:flex-start}.signal-branch-preview>i{width:4px;height:4px;border:1px solid #a390b47a;transform:rotate(45deg)}.signal-branch-preview>b{font:6px 'IBM Plex Mono',monospace;letter-spacing:.5px;margin-left:4px}.signal-map-link{display:flex;align-items:center;justify-content:space-between;width:100%;padding:11px 12px;background:#87ddd60a;border:1px solid #87ddd637;color:#a9d9d5;font:8px 'IBM Plex Mono',monospace;letter-spacing:.7px}.signal-map-link>span{font-size:14px}.right-side .rail-divider{margin:22px 0}.right-side .sector-map{margin:19px 0}.right-side h3{margin-bottom:21px}.menu-secondary>.secondary-button{min-width:0;flex:1;font-size:clamp(6px,1.6cqw,8px);white-space:nowrap}.menu-secondary>.secondary-button:first-child{color:var(--cyan);border-color:#87ddd652;background:#87ddd609}.menu-records>div{min-width:0}.menu-records{gap:24px}.menu-records span{font-size:clamp(6px,1.6cqw,7px)}
+.next-level-brief{margin:24px 0 5px;padding:15px 14px;border:1px solid #87ddd62e;background:linear-gradient(120deg,#87ddd609,#17151e)}.next-level-brief>span{font:7px/1.7 'IBM Plex Mono',monospace;letter-spacing:.6px;color:var(--cyan)}.next-level-brief>h3{font:600 19px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.4px;color:#e0d7e7;margin:8px 0}.panel .next-level-brief>p{font-size:12px;line-height:1.7;margin:0;color:#b1acbf}.victory-panel>.primary-button{font-size:clamp(8px,2.2cqw,10px);letter-spacing:.7px;gap:8px}.victory-panel .checkpoint-label{line-height:1.8}
+.signal-map-panel{background:radial-gradient(ellipse at 80% 5%,#675a862d,transparent 25%),linear-gradient(150deg,#242032,#12121d);padding:24px 18px 18px;scroll-behavior:auto}.signal-map-panel .panel-mark{padding-right:25px}.signal-map-panel h2{margin-bottom:14px}.signal-map-panel .parts-inventory{margin-top:0;margin-bottom:15px}.signal-map-panel .map-intro>p{font-size:12px;line-height:1.7;color:#bbb2ca;margin:0 0 16px}.map-progress{display:flex;align-items:center;gap:14px;padding:13px 0;border-block:1px solid #b0a0c028}.map-progress>b{font:500 20px 'IBM Plex Mono',monospace;letter-spacing:-.5px;color:#e4d4bc;white-space:nowrap}.map-progress>span{font:6px/1.8 'IBM Plex Mono',monospace;letter-spacing:.8px;color:#a39aaf}.map-progress>i{font:30px 'Barlow',sans-serif;color:var(--cyan);margin-left:auto}.map-legend{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:18px 0 10px;font:6px 'IBM Plex Mono',monospace;letter-spacing:.4px;color:#afa6bc}.map-legend>span{display:flex;align-items:center;gap:5px}.map-legend i{width:6px;height:6px;border:1px solid #a48db570;display:block}.map-legend i.charted{background:var(--amber);border-color:var(--amber)}.map-legend i.current{background:var(--cyan);border-color:var(--cyan)}.panel .map-instruction{font-size:10px;line-height:1.6;color:#9990aa;margin:0 0 22px}.signal-tree{position:relative;padding-bottom:6px}.signal-tree:before{content:'';position:absolute;left:13px;top:25px;bottom:70px;border-left:1px solid #9a83b642}.signal-chapter{position:relative;margin:0 0 25px;padding-left:0}.chapter-head{position:relative;display:flex;align-items:center;gap:10px}.chapter-number{position:relative;z-index:1;display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;border:1px solid #80748960;background:#1b1724;font:9px 'IBM Plex Mono',monospace;color:#877a95}.chapter-head>div{min-width:0}.chapter-head>div>span{display:block;font:6px/1.8 'IBM Plex Mono',monospace;letter-spacing:.6px;color:#92859f}.chapter-head h3{font:600 19px/1.15 'Barlow Condensed',sans-serif;letter-spacing:.45px;margin:3px 0 0;color:#b4a8c2}.chapter-head>i{font-style:normal;color:#776685;margin-left:auto;font-size:14px}.current .chapter-number{border-color:#87ddd685;color:var(--cyan);box-shadow:0 0 14px #87ddd60c}.current .chapter-head h3{color:#d0eeeb}.current .chapter-head>i{color:var(--cyan)}.charted .chapter-number{border-color:#d6af7970;color:var(--amber)}.charted .chapter-head h3{color:#dac6ac}.panel .chapter-summary{margin:10px 0 13px 38px;font-size:11px;line-height:1.7;color:#afa3bd}.chapter-nodes{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:12px 0 0 38px}.chapter-nodes:before{content:'';position:absolute;left:-24px;right:15px;top:50%;border-top:1px solid #a28ab332;pointer-events:none}.signal-node{position:relative;min-width:0;min-height:44px;padding:7px 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:#1d1828;border:1px solid #8d76a333;color:#9680aa;font:11px 'IBM Plex Mono',monospace}.signal-node small{font:6px 'IBM Plex Mono',monospace;color:#9078a3}.signal-node:disabled{opacity:.75}.signal-node.charted{background:#28212b;border-color:#d6af7955;color:#e4c091}.signal-node.charted small{color:var(--amber)}.signal-node.current{background:#203233;border-color:#87ddd693;box-shadow:0 0 20px #87ddd612;color:#c7fffa}.signal-node.current small{color:var(--cyan)}.signal-chapter.locked .chapter-head h3{font-size:16px;color:#80728f;letter-spacing:.85px}.signal-chapter.locked .chapter-head>div>span{color:#7f718d}.signal-endless{display:flex;align-items:flex-start;gap:16px;padding:15px 12px;border:1px dashed #a18bb341;background:#231c2b;margin-top:7px}.signal-endless>b{font:32px/1 'Barlow',sans-serif;color:#a58dbc}.signal-endless>div{min-width:0}.signal-endless span{font:6px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#b69bc9}.signal-endless h3{font:600 19px/1.1 'Barlow Condensed',sans-serif;letter-spacing:.4px;margin:6px 0;color:#d0badf}.panel .signal-endless p{font-size:10px;line-height:1.7;margin:0;color:#a69ab6}.signal-endless.available{border-color:#87ddd676}.signal-endless.available>b,.signal-endless.available span{color:var(--cyan)}.signal-map-dismiss{position:absolute;top:8%;right:8%;z-index:2;width:32px;height:32px;border:1px solid #ad99bd47;background:#211b2cf5;color:#c4b4d2;font-size:20px;box-shadow:0 3px 14px #0004}.mission-location{font:8px/1.8 'IBM Plex Mono',monospace;letter-spacing:.6px;color:var(--cyan);margin-bottom:18px}.panel .mission-briefing{font-size:14px;line-height:1.8;color:#c6bacf}.mission-rules{display:flex;gap:14px;justify-content:space-between;margin:22px 0 12px;padding-block:12px;border-block:1px solid #bba3ca23;font:6px/1.7 'IBM Plex Mono',monospace;color:var(--amber)}
+.archive-chapter{border-top:1px solid #af98bf32;padding:15px 0}.archive-chapter>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none;min-height:35px}.archive-chapter>summary::-webkit-details-marker{display:none}.archive-chapter>summary>span{font:7px/1.8 'IBM Plex Mono',monospace;color:#9a89aa;letter-spacing:.6px}.archive-chapter>summary b{display:block;font:600 19px/1.3 'Barlow Condensed',sans-serif;color:#d0c0dc;letter-spacing:.4px}.archive-chapter>summary>small{font:8px 'IBM Plex Mono',monospace;white-space:nowrap;color:var(--amber)}.archive-chapter>summary i{display:inline-block;font-style:normal;font-size:14px;margin-left:5px}.archive-chapter[open]>summary i{transform:rotate(45deg)}.archive-chapter .archive-item{padding:15px 0}.archive-chapter>summary:focus-visible{outline:2px solid var(--cyan);outline-offset:4px}
+@media(max-width:600px){.signal-map-panel{padding:22px 15px 15px}.signal-map-dismiss{top:8%;right:8%;width:30px;height:30px}.signal-map-panel .map-intro>p{font-size:12px}.panel .chapter-summary{font-size:11px}.chapter-nodes{gap:5px}.signal-node{min-height:44px;font-size:11px}.chapter-head h3{font-size:19px}.chapter-head>div>span{font-size:6px;letter-spacing:.2px}.mission-rules{font-size:6px;gap:7px}.menu-records{gap:22px}.map-progress{gap:10px}.map-progress>b{font-size:18px}.map-progress>span{font-size:6px;letter-spacing:.1px}}
+@media(max-width:350px){.signal-map-panel{padding-inline:12px}.signal-map-panel h2{font-size:29px}.chapter-head{gap:8px}.chapter-head>div>span{font-size:5px}.chapter-nodes{margin-left:35px;gap:4px}.panel .chapter-summary{margin-left:35px}.map-legend{font-size:5px;letter-spacing:0}.map-progress>span{font-size:5px}.signal-node{font-size:10px}.menu-secondary>.secondary-button{font-size:6px;letter-spacing:0}.menu-records{gap:17px}}
+@media(orientation:landscape) and (max-height:540px){.signal-map-panel{padding:12px 10px}.signal-map-dismiss{top:8%;right:8%;width:24px;height:24px;font-size:16px}.signal-map-panel .panel-mark{padding-right:22px}.signal-map-panel h2{font-size:23px}.signal-map-panel .map-intro>p{font-size:9px}.map-progress{gap:7px}.map-progress>b{font-size:14px}.map-progress>span{font-size:4px}.map-progress>i{font-size:19px}.map-legend{font-size:4px;gap:3px}.map-legend>span{gap:3px}.map-legend i{width:4px;height:4px}.chapter-head{gap:7px}.chapter-number{width:23px;height:23px;font-size:8px}.signal-tree:before{left:11px}.chapter-head>div>span{font-size:4px}.chapter-head h3{font-size:14px}.signal-chapter.locked .chapter-head h3{font-size:12px}.chapter-nodes{margin-left:30px;gap:3px}.chapter-nodes:before{left:-19px}.signal-node{min-height:32px;font-size:8px}.panel .chapter-summary{margin-left:30px;font-size:9px}.signal-chapter{margin-bottom:20px}.menu-secondary>.secondary-button{font-size:4px;letter-spacing:0}.panel .next-level-brief>p{font-size:9px}.next-level-brief>span{font-size:5px}.next-level-brief>h3{font-size:14px}.next-level-brief{padding:10px}.archive-chapter>summary b{font-size:15px}.mission-rules{font-size:4px}.panel .mission-briefing{font-size:11px}}
+.opening-route{list-style:none;padding:0;margin:13px 0 0 38px;display:grid;gap:7px;font:7px/1.5 'IBM Plex Mono',monospace;letter-spacing:.35px;color:#a99bb8}.opening-route>li{display:flex;gap:9px;align-items:baseline}.opening-route span{color:#6eacaa;font-size:6px}.archive-list>.launch-orders{padding-top:0;margin-bottom:17px}.hud-sector>span:first-child{min-width:0;max-width:56%}.hud-sector>span:first-child b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}.hud-sector .wave-counter{flex-shrink:0;font-size:clamp(5px,1.45cqw,7px)}
+@media(max-width:350px){.opening-route{margin-left:35px;font-size:6px}}
+@media(orientation:landscape) and (max-height:540px){.opening-route{margin-left:30px;font-size:5px}.opening-route span{font-size:4px}.hud-sector .wave-counter{font-size:4px}.hud-sector>span:first-child b{display:none}}
+@media(max-width:350px){.signal-map-panel .panel-mark,.signal-map-panel .map-intro>p{display:none}.signal-map-panel>.eyebrow{padding-right:25px;font-size:6px;letter-spacing:1px}.signal-map-panel h2{margin-top:14px}.signal-map-panel .map-progress{padding-block:10px}.signal-map-panel .map-legend{margin-top:14px}.signal-map-panel .map-instruction{margin-bottom:16px}}
+
+/* A quiet launch screen: one primary action, the ship, and small instrument readouts. */
+.menu-overlay{padding:5.5% 9%}
+.menu-topline{align-items:center;min-height:24px;color:#b0a6bf;letter-spacing:1.4px;font-size:7px}
+.menu-topline .menu-parts{display:block;margin:0;padding:0;border:0;background:none;flex-shrink:0}
+.menu-topline .parts-inventory-count{gap:8px}
+.menu-topline .parts-inventory-count>span{font-size:7px;letter-spacing:.6px;color:#a49aaf}
+.menu-topline .parts-inventory-count strong{font-size:12px;letter-spacing:.4px;color:#e7c397}
+.menu-topline .parts-inventory-count strong small{font-size:8px;color:#a89aae}
+.menu-topline .parts-inventory-project{display:none}
+.menu-topline .menu-parts.complete strong{color:var(--cyan)}
+.menu-overlay .title-block{margin-top:9%}
+.menu-overlay .title-block .eyebrow{font-size:6px;letter-spacing:2.6px;color:#958aa7}
+.menu-overlay h1{font-size:clamp(64px,21cqw,103px);letter-spacing:6px;margin-top:2%}
+.menu-overlay .title-rule{margin-top:8px;color:#9d90b0;font-size:6px;letter-spacing:2.7px}
+.in-menu .hero-ship{top:28%;height:33%;width:39%;left:30.5%;filter:drop-shadow(0 22px 27px #0007)}
+.in-menu .hero-ship.manta{top:30%;height:28%;width:53%;left:23.5%}
+.in-menu .ship-callout{top:45%;left:74%;opacity:.55}
+.menu-overlay .menu-actions{left:9%;right:9%;bottom:5%}
+.menu-overlay .menu-ship-card{margin:0 0 17px;padding:0;border:0;background:none}
+.menu-overlay .edit-ship-button{min-height:45px;padding:5px 0;color:#cabbd8;border:0;background:none;gap:12px}
+.menu-airframe{min-width:0}
+.menu-airframe>strong{display:block;font:600 18px/1.1 'Barlow Condensed',sans-serif;letter-spacing:1.3px;text-transform:uppercase;color:#d6c9df}
+.menu-overlay .edit-ship-button small{margin-top:5px;font:6px/1.5 'IBM Plex Mono',monospace;color:#91839e;letter-spacing:.5px;text-transform:uppercase}
+.menu-edit-label{display:flex;align-items:center;gap:10px;flex-shrink:0;font:500 9px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#e1ba84}
+.menu-edit-label>i{font:20px/1 'Barlow',sans-serif;font-style:normal}
+.menu-overlay .menu-actions>.primary-button{min-height:52px;padding:15px 18px;border:0;background:#dab784;box-shadow:0 5px 22px #c49f5810;font-size:12px;letter-spacing:2.1px}
+.menu-overlay .menu-actions>.primary-button:hover{background:#e5c697}
+.menu-overlay .button-detail{font-size:7px;letter-spacing:1px;gap:12px}
+.menu-overlay .menu-actions>.secondary-button{min-height:43px;margin-top:6px;padding:10px 0;border:0;background:none;box-shadow:none;font-size:10px;font-weight:500;letter-spacing:1.5px;color:#c5b5d2}
+.menu-overlay .menu-actions>.secondary-button:disabled{opacity:.44}
+.menu-overlay .menu-actions>.secondary-button .button-detail{color:#ab9bbd;font-size:7px}
+.menu-overlay .menu-actions>.secondary-button .button-detail>b{font-size:15px}
+.menu-overlay .menu-secondary{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:13px;border:0}
+.menu-overlay .menu-secondary>.secondary-button{width:auto;flex:0 1 auto;min-height:34px;margin:0;padding:8px 0;border:0;background:none;box-shadow:none;font:7px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#a397b3}
+.menu-overlay .menu-secondary>.secondary-button:first-child{color:#a0cdc8}
+.menu-overlay .menu-secondary>.secondary-button:hover{color:#ece4f3;background:none}
+.menu-overlay .menu-records{display:flex;justify-content:center;gap:17px;margin-top:18px;color:#80708f}
+.menu-overlay .menu-records>div{display:flex;flex-direction:row;align-items:baseline;gap:8px;min-width:0}
+.menu-overlay .menu-records span{font:6px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#81758f}
+.menu-overlay .menu-records strong{font:10px 'IBM Plex Mono',monospace;letter-spacing:1px;color:#b1a2be}
+.menu-overlay .menu-records small{font-size:8px;color:#84758f}
+.menu-overlay .record-divider{height:10px;background:#9683ab23}
+.menu-overlay .menu-hint{margin-top:17px;font-size:5px;letter-spacing:1.4px;color:#756780}
+.menu-overlay .menu-hint>span{padding-inline:8px}
+.menu-overlay .mobile-install{padding-top:13px;font-size:6px;letter-spacing:.9px;color:#8f7d9f}
+.signal-map-link{padding:9px 0;border:0;background:none;color:#9bbbb8;min-height:36px}
+.signal-map-link:hover{background:none}
+@media(max-width:600px){
+  .menu-overlay{padding:5% 8%}
+  .menu-overlay .menu-actions{left:8%;right:8%;bottom:4%}
+  .menu-overlay .title-block{margin-top:7%}
+  .menu-overlay .menu-ship-card{margin-bottom:12px}
+  .menu-overlay .edit-ship-button{min-height:39px}
+  .menu-airframe>strong{font-size:16px}
+  .menu-edit-label{font-size:8px;letter-spacing:.7px;gap:7px}
+  .menu-overlay .menu-actions>.primary-button{min-height:48px;padding:13px 15px;font-size:11px}
+  .menu-overlay .menu-actions>.secondary-button{min-height:35px;padding-block:8px;margin-top:5px;font-size:9px}
+  .menu-overlay .menu-secondary{margin-top:9px;gap:12px}
+  .menu-overlay .menu-secondary>.secondary-button{min-height:33px;font-size:7px;letter-spacing:.75px}
+  .menu-overlay .menu-records{margin-top:12px}
+  .menu-overlay .menu-hint{margin-top:13px}
+  .in-menu .hero-ship{top:27%;height:30%;width:40%;left:30%}
+  .in-menu .hero-ship.manta{top:28%;height:27%;width:55%;left:22.5%}
+  .in-menu .ship-callout{left:75%;top:43%}
+}
+@media(max-width:350px){
+  .menu-topline{font-size:6px;letter-spacing:1px}
+  .menu-topline .parts-inventory-count>span{font-size:6px}
+  .menu-topline .parts-inventory-count strong{font-size:11px}
+  .menu-overlay .title-block{margin-top:5%}
+  .menu-overlay .title-rule{font-size:5px;letter-spacing:2px}
+  .menu-overlay .title-block .eyebrow{font-size:5px;letter-spacing:2px}
+  .menu-overlay .menu-actions{bottom:3.5%}
+  .menu-overlay .menu-ship-card{margin-bottom:10px}
+  .menu-overlay .edit-ship-button{min-height:34px}
+  .menu-airframe>strong{font-size:15px}
+  .menu-overlay .edit-ship-button small{font-size:5px;margin-top:4px}
+  .menu-edit-label{font-size:7px;letter-spacing:.6px}
+  .menu-overlay .menu-actions>.primary-button{min-height:45px;padding:12px 13px}
+  .menu-overlay .menu-actions>.secondary-button{min-height:32px;font-size:8px}
+  .menu-overlay .menu-secondary{margin-top:5px}
+  .menu-overlay .menu-secondary>.secondary-button{min-height:30px;font-size:6px}
+  .menu-overlay .menu-records{margin-top:10px}
+  .menu-overlay .menu-hint{margin-top:11px}
+  .menu-overlay .mobile-install{padding-top:10px;font-size:5px}
+  .in-menu .hero-ship{top:27%;height:26%;width:38%;left:31%}
+  .in-menu .hero-ship.manta{top:27%;height:24%;width:53%;left:23.5%}
+}
+@media(orientation:landscape) and (max-height:540px){
+  .menu-overlay{padding:5% 9%}
+  .menu-topline{min-height:16px;font-size:5px;letter-spacing:.6px}
+  .menu-topline .parts-inventory-count{gap:5px}
+  .menu-topline .parts-inventory-count>span{font-size:4px;letter-spacing:.3px}
+  .menu-topline .parts-inventory-count strong{font-size:8px}
+  .menu-topline .parts-inventory-count strong small{font-size:5px}
+  .menu-overlay .title-block{margin-top:3%}
+  .menu-overlay .title-block .eyebrow{font-size:4px;letter-spacing:1.5px}
+  .menu-overlay h1{font-size:clamp(36px,19cqw,64px);letter-spacing:4px}
+  .menu-overlay .title-rule{font-size:4px;letter-spacing:1px;margin-top:4px}
+  .menu-overlay .menu-actions{bottom:4%;left:9%;right:9%}
+  .menu-overlay .menu-ship-card{margin-bottom:8px}
+  .menu-overlay .edit-ship-button{min-height:27px;padding:2px 0;gap:5px}
+  .menu-airframe>strong{font-size:12px;letter-spacing:.7px}
+  .menu-overlay .edit-ship-button small{font-size:4px;letter-spacing:.2px;margin-top:3px}
+  .menu-edit-label{font-size:5px;letter-spacing:.4px;gap:4px}
+  .menu-edit-label>i{font-size:14px}
+  .menu-overlay .menu-actions>.primary-button{min-height:34px;padding:9px 10px;font-size:8px;letter-spacing:1.3px}
+  .menu-overlay .button-detail{font-size:4px;letter-spacing:.6px;gap:8px}
+  .menu-overlay .menu-actions>.secondary-button{min-height:25px;padding-block:6px;margin-top:3px;font-size:6px;letter-spacing:.6px}
+  .menu-overlay .menu-actions>.secondary-button .button-detail{font-size:4px}
+  .menu-overlay .menu-secondary{margin-top:3px;gap:7px}
+  .menu-overlay .menu-secondary>.secondary-button{min-height:25px;font-size:4px;letter-spacing:.4px}
+  .menu-overlay .menu-records,.menu-overlay .menu-hint,.menu-overlay .mobile-install{display:none}
+  .in-menu .hero-ship{top:29%;height:29%;width:41%;left:29.5%}
+  .in-menu .hero-ship.manta{top:30%;height:24%;width:56%;left:22%}
+  .in-menu .ship-callout{display:none}
+}
+@media(min-width:601px) and (min-height:541px) and (max-height:850px){
+  .menu-overlay .title-block{margin-top:5%}
+  .menu-overlay .menu-ship-card{margin-bottom:10px}
+  .menu-overlay .edit-ship-button{min-height:34px}
+  .menu-airframe>strong{font-size:15px}
+  .menu-edit-label{font-size:7px;letter-spacing:.6px;gap:7px}
+  .menu-overlay .edit-ship-button small{font-size:5px;margin-top:4px}
+  .menu-overlay .menu-actions>.primary-button{min-height:44px;padding:12px 14px;font-size:10px}
+  .menu-overlay .menu-actions>.secondary-button{min-height:31px;padding-block:7px;margin-top:4px;font-size:8px}
+  .menu-overlay .menu-secondary{margin-top:5px}
+  .menu-overlay .menu-secondary>.secondary-button{min-height:29px;font-size:6px;letter-spacing:.65px}
+  .menu-overlay .menu-records{margin-top:10px}
+  .menu-overlay .menu-hint{margin-top:11px}
+  .in-menu .hero-ship{top:28%;height:30%;width:37%;left:31.5%}
+  .in-menu .hero-ship.manta{top:29%;height:26%;width:52%;left:24%}
+  .right-side h3{font-size:22px;margin-bottom:18px}
+  .right-side .sector-map{margin:16px 0}
+  .right-side .rail-divider{margin:17px 0}
+  .right-side .install-link{margin-top:20px}
+}
+.in-menu:has(.playtest-controls) .hero-ship{height:26%;width:35%;left:32.5%}
+.in-menu:has(.playtest-controls) .hero-ship.manta{height:23%;width:49%;left:25.5%}
+@media(max-width:350px){.in-menu:has(.playtest-controls) .hero-ship{height:21%;width:33%;left:33.5%}.in-menu:has(.playtest-controls) .hero-ship.manta{height:19%;width:47%;left:26.5%}}
+@media(orientation:landscape) and (max-height:540px){.in-menu:has(.playtest-controls) .hero-ship{height:20%;width:33%;left:33.5%}.in-menu:has(.playtest-controls) .hero-ship.manta{height:18%;width:48%;left:26%}}

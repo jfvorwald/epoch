@@ -57,6 +57,7 @@ test('multishot adds one projectile per collection and survives buffs, weapon sw
   await page.waitForTimeout(180);
   expect((await snapshot(page)).combat.elapsed).toBe(paused.elapsed);
   await action(page, 'resume');
+  await debug(page, 'holdFire', { enabled: true });
   await debug(page, 'advance', { seconds: 9 });
   expect((await snapshot(page)).combat.multishot).toBe(2);
   await debug(page, 'complete');
@@ -107,7 +108,7 @@ test('collected ship parts survive defeat and unlock Manta exactly at twelve', a
   expect((await snapshot(page)).combat.weapon).toBe('lance');
 });
 
-test('new airframe checkpoints keep their tuning and reset sector weapons', async ({ page }) => {
+test('new airframe checkpoints keep their tuning and reset level weapons', async ({ page }) => {
   await launch(page);
   await page.evaluate(() => {
     const saved = (window as any).__EPOCH__.snapshot().save;
@@ -146,7 +147,7 @@ test('new airframe checkpoints keep their tuning and reset sector weapons', asyn
   expect(continued.multishot).toBe(0);
 });
 
-test('paired minibosses require both kills before the sector can finish', async ({ page }) => {
+test('paired minibosses require both kills before the level can finish', async ({ page }) => {
   await launch(page);
   await page.evaluate(() => {
     const saved = (window as any).__EPOCH__.snapshot().save;

@@ -1,6 +1,61 @@
-# Browser validation — 11 September 2026
+# Browser validation — 14 September 2026
 
 EPOCH browser publisher: **Jaq Studios**. Godot source was reviewed before implementation, not executed. The supplied reference image informed portrait composition; the new SVG artwork is original.
+
+## Production promotion and Training Wheels — 14 September
+
+Release `77f326db3cf3372c`, build `94e88c74bcb0`, was promoted from the frozen staging artifact after owner authorization. All 41 public production files match that artifact. Production and its public provider fallback reject every beta API with 404; staging remains protected by Access, and production has no beta database, email or scheduled sender.
+
+The gameplay source inherits the 167 unit, 30 release and 58 focused Chrome/iPhone-profile WebKit scenarios recorded for the Training Wheels update, including four-to-five-hit first-wave enemies, default-off tracing, immediate paused toggling and save migration. Subsequent releases changed only the private tester roster. The exact final artifact passes offline launch in both engines, with 41 cached assets, no runtime errors and no private API caching.
+
+Normal Chrome needed one ordinary reload to replace the former cached menu. Read-only live inspection then verified the updated menu, 50-level Signal Map with endless continuation, and Training Wheels off in Settings. No flight was launched and no preference or stored progress was changed. This is browser coverage, not a physical iPhone or human difficulty assessment. Evidence is in `.releases/77f326db3cf3372c/validation/`.
+
+## Persistent projectiles, guardians and Supercharge — 14 September
+
+Release `9cb6c3962fa4e4ef`, build `1de2df997296`, is deployed to private staging.
+
+- 149 unit tests and 30 release tests pass. All 90 browser scenarios pass in Chrome and iPhone-profile WebKit: 88 in the full suite plus two new destruction tests. They verify actual post-kill projectile damage, surviving mine fragments, delayed final completion, distinct player shot textures, frozen guardian targeting, Supercharge expiry/refresh/pause and earned-power preservation. The initial concurrent run failed because temporary servers and output directories were shared; the final run used a persistent server and isolated outputs.
+- Production-mode artifact checks pass in both engines: correct staging label, absent development controls, offline launch with the origin stopped, network-only private feedback API, legacy service-worker recovery and byte-preserved local saves.
+- Assisted progression clears levels 1–5, 25, 50, 51 and 100 with normal autofire, actual damage and pickups, 5–7 earned arrays and bounded entity counts. The pilot has invulnerability and instant arena-bounded aim; this verifies reachability rather than human balance.
+- Twelve guardian scenarios and 27 screenshots cover all five archetypes in phases one and three plus Reduced Motion. Projectile artwork review confirms eleven reusable textures and six distinct player airframe/weapon silhouettes. Phone and desktop Supercharge readouts keep earned power and temporary maximum power separate.
+- Deployment receipt and signed-out checks confirm the private staging release. Root/build/service-worker/art/session requests redirect to Access, fallback returns 404 and production remains unchanged. Live authenticated in-app gameplay is unverified because that browser still fails staging navigation; its generated error page was blocked by Browser Use. No protection was bypassed or modified.
+
+Evidence is retained in `.releases/9cb6c3962fa4e4ef/validation/`.
+
+## Compact menu and per-level artwork — 13 September
+
+Staged release `67091a6031b019fe`, build `41b36d846387`.
+
+- 76 unit tests and 11 release tests pass. All 64 Chrome/iPhone-profile WebKit scenarios pass: 62 in the full run, plus both bulk visual cases after correcting an invalid test fixture that allocated two pickup carriers among only one enemy. The fixture now uses three enemies; ordinary campaign waves were valid throughout. The corrected stress checks finished in 10.7s Chrome and 10.1s WebKit.
+- Runtime rendering checks cover all 50 authored levels plus 51 and 100: 52 distinct background pixel hashes, correct themed enemy and guardian texture assignments, and a constant total texture count. Reduced Motion freezes the themed star drift. Existing collision, weapon, wave, save, map, ending and endless-continuation checks pass.
+- A separate fleet audit verifies all 50 authored appearances independently for straight units, weavers, shooters, asteroids and guardians. Alpha-only checks find ten distinct base hull families and 50 configured silhouettes. Generation makes zero gameplay RNG calls, peaks at nine extra textures and leaves zero retained textures after 50 create/dispose cycles. The audit is retained under this staged release’s `validation/` directory.
+- Visual inspection covered the simplified menu at desktop, short desktop, 320px phone, iPhone-profile WebKit and landscape dimensions. Ship editing and parts remain visible; all controls are accessible without horizontal overflow. Contact sheets cover all 50 fleets and representative scenery across all ten environments. Paused formation screenshots verify the opening five levels in the full game HUD.
+- Isolated Chrome timing over 12 representative levels and three passes measured visual transitions at 203.8ms median / 292.2ms maximum, including background generation at 166.8ms median. This is a desktop measurement, not physical-phone performance certification. Scenery draws once per level, while ordinary gameplay moves only the existing stars.
+- TypeScript/Vite build, shared-artifact staging/production-hostname checks, offline launches and legacy service-worker update checks pass in both browsers. Offline caching contains 41 assets; saved local storage survives the update byte-for-byte. These local artifact checks do not deploy production.
+- Live staging hosting remains Access-protected and its provider fallback is disabled; production’s homepage hash is unchanged. The private launcher successfully authenticated, but fresh EPOCH tabs in the in-app browser failed navigation. Live authenticated gameplay on this release could not be rechecked; the user’s existing paused tab remains untouched. Manual staging review is still needed before production promotion.
+
+## Fifty-level story, angled asteroids and endless continuation — 12 September
+
+Staged release `5325d53cd2861925`, build `414f13ab46cd`.
+
+- 71 unit tests and 11 release tests passed. All 60 browser scenarios passed across Chrome and iPhone-profile WebKit: 58 in the main run and the two asteroid collision probes after isolating their intended target from other crossing rocks. Coverage includes the 50-node map, hidden future details, random 0/1/2 asteroid plans held through pause, angled crossings, all-enemy kill gates, the level-50 ending, levels 51–52, high-score checkpoint reload and the earlier ship/weapon features.
+- `scripts/verify-endless.mjs` cleared levels 1–50, 51 and 100 through real autofire, projectile damage, normal pickups and completion controls. Every level reached weapon power 12 and saved the next checkpoint; asteroid counts covered zero, one and two, with surviving rocks making return passes. Observed level durations ranged from 43.1 to 272.3 simulated seconds; peak hostile/friendly shots were 78/57, within budgets. This audit uses invulnerability and instantaneous arena-bounded aim; it does not establish human difficulty. The JSON report is retained beside this staged release under `validation/endless-audit-chrome.json`.
+- The story contains 51 entries (opening orders plus 50 field transmissions), 5,677 words, ten chapters and 50 unique destinations. Each transmission has 100–118 words. Legacy archive IDs remain valid, old completed campaigns gain a level-6 checkpoint, and already completed levels unlock their newly added messages.
+- TypeScript/Vite build and shared-artifact staging/production-hostname checks passed. Both browsers passed offline launch with the isolated origin stopped (41 cached assets), and legacy service-worker migration with the exact saved local-storage record retained. No runtime errors were observed. These artifact checks do not deploy production.
+- Desktop Chrome, 320px Chrome and iPhone-profile WebKit visual checks covered menu, map, mission briefing, archive orders and endless continuation. No horizontal overflow or page errors; the compact 320px map exposes all five opening nodes in its first viewport.
+- Live signed-in staging showed the exact build, full map, mission rules, level 01 / wave 01 of 08, two naturally collected power upgrades yielding three shots, and pause. Signed-out representative paths require Access; fallback is disabled. The production homepage hash remains unchanged. Physical-device feel and unassisted difficulty remain staging playtest checks.
+
+## Ship editor, weapon progression and persistent waves — 12 September
+
+Staged release `cc35b1f097f47953`, build `afe3b2e102d7`.
+
+- 58 unit tests and 11 release tests passed. 52 Chrome and iPhone-profile WebKit scenarios passed, including seven new scenarios per browser for 12-power/eight-shot caps, real projectile weaknesses after swaps, persistent parts UI, last-kill wave gating, destructible non-shooting debris, damage-preserving enemy returns, and contact that cannot count as a kill. Initial desktop failures during source integration passed on a stable-source rerun.
+- TypeScript/Vite build passed. The shared artifact passed staging/production-hostname badge and disabled-debug checks, plus launch/pause/resume. Offline launch passed in both browsers with the local origin stopped and 41 cached assets. These are local production-mode artifact tests, not a production deployment.
+- Responsive screenshots inspected at 1440×1000, 390×844 and 320×568: Edit Ship, parts meter, hangar controls, weapon power at 0/12 and 12/12, eight shots, 2.25× blast and pause inventory fit without page overflow.
+- An accelerated Chrome campaign used ordinary Strelka auto-fire, actual collision damage, pickup collection, scheduling and outcomes. All sectors completed: waves 8/10/10/10/10, kills 67/84/90/99/103, array pickups 14/18/18/18/18, and zero surviving enemies or runtime errors. All reached power 12 before their guardians. Simulation took about 37/49/58/59/59 game seconds and included enemy return loops in sectors 4–5. Invulnerability and instantaneous programmatic aiming were enabled; this confirms progression and reachability, not human play difficulty.
+- Live private staging confirmed the current build, editable handling, parts 0/12, wave 1/8 and two naturally collected upgrades increasing shots from one to three. Cloudflare Access still protects representative paths, fallback is disabled, and production's homepage hash is unchanged.
+
+The historical results below describe earlier releases. Physical-device feel and balance remain human playtest checks.
 
 ## Returning-player cache update
 

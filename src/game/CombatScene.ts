@@ -1,12 +1,20 @@
 import Phaser from 'phaser';
-import { LEVELS } from '../data/levels';
+import { getLevel } from '../data/levels';
+import { GAME_CONFIG, MAX_SCORE } from '../data/config';
 import { SHIPS, getShipStats, defaultLoadout, SHIP_PARTS_REQUIRED, SHIP_PART_DROP_CHANCE, PLAYER_MAX_HP } from '../data/ships';
 import type { Checkpoint, CombatCallbacks, EnemyKind, HudState, Level, PickupKind, Preferences, ShipId, ShipLoadout, WeaponKind, Wave } from './types';
 import { aimedVelocity, ARENA, clamp, moveRelative, segmentCircleHit } from './math';
+import { addWeaponPower, getEffectiveWeaponPower, getDamageMultiplier, getProjectileCount, getProjectileDamageMultiplier, getWeaponPower, getWeaponWeakness, MAX_WEAPON_POWER } from './weapons';
+import { boundedProjectileSpeed, createAsteroidTrajectory, createLevelWaves } from './asteroids';
+import { getLevelVisual } from '../data/visuals';
+import { LevelBackdrop } from './LevelBackdrop';
+import { createEnemyVisuals, type EnemyVisualSet } from './enemyVisuals';
+import { createProjectileTextures, getPlayerShotShape, getEnemyShotShape, getProjectileStyle, type ProjectileShape } from './projectileVisuals';
+import { createGuardianAttack, sampleGuardianShot, type GuardianPlan, type GuardianShot } from './guardianAttacks';
 
 type Sprite = Phaser.GameObjects.Image;
-type Projectile = { sprite: Sprite; x: number; y: number; px: number; py: number; vx: number; vy: number; radius: number; damage: number; age: number; hostile: boolean; pierce: number; hitEnemies: Set<Enemy> };
-type Enemy = { sprite: Sprite; x: number; y: number; px: number; py: number; sx: number; sy: number; tx: number; ty: number; age: number; entry: number; hold: number; dive: boolean; vx: number; vy: number; hp: number; maxHp: number; radius: number; kind: EnemyKind; phase: number; shotAt: number; flash: number; speed: number; drop?: PickupKind; boss: boolean; bossPhase: number; attackAt: number; telegraph: number; attackAngle: number; tier: number; tint: number; bossKind?: 'warden' | 'twins' | 'carrier' | 'lattice' | 'koschei' };
+type Projectile = { sprite: Sprite; x: number; y: number; px: number; py: number; vx: number; vy: number; radius: number; damage: number; weapon: WeaponKind; age: number; hostile: boolean; pierce: number; hitEnemies: Set<Enemy>; shape: ProjectileShape; trajectory?: GuardianShot; lifetime: number };
+type Enemy = { sprite: Sprite; x: number; y: number; px: number; py: number; sx: number; sy: number; tx: number; ty: number; age: number; entry: number; hold: number; dive: boolean; vx: number; vy: number; hp: number; maxHp: number; radius: number; kind: EnemyKind; phase: number; shotAt: number; flash: number; speed: number; drop?: PickupKind; boss: boolean; bossPhase: number; attackAt: number; telegraph: number; attackAngle: number; tier: number; tint: number; returns: number; asteroidIndex?: number; returnPattern: 'hook' | 'slalom' | 'crossing' | 'asteroid-crossing'; bossKind?: 'warden' | 'twins' | 'carrier' | 'lattice' | 'koschei'; attackPlan?: GuardianPlan; attackCycle?: number };
 type Pickup = { sprite: Phaser.GameObjects.Container; x: number; y: number; px: number; py: number; age: number; kind: PickupKind; phase: number };
 type Effect = { sprite: Sprite; x: number; y: number; vx: number; vy: number; age: number; life: number; scale: number; rotation: number };
 type Star = { sprite: Sprite; speed: number; phase: number };
@@ -14,10 +22,9 @@ type Star = { sprite: Sprite; speed: number; phase: number };
 const DEATH_SECONDS = 0.95;
 const LIMITS = { friendly: 180, hostile: 180, effects: 100, enemies: 64, pickups: 20 };
 const BUFF_SECONDS = 8;
-const PICKUP_COLORS: Record<PickupKind, number> = { health: 0x7bffc6, rapid: 0xffc66c, spread: 0x9bf2ff, damage: 0xe4a0ff, multishot: 0x75f0ed, 'weapon-pulse': 0x9bf2ff, 'weapon-lance': 0xc4a0ff, 'weapon-scatter': 0xffb773, 'ship-part': 0xffdc89 };
-const PICKUP_LABELS: Record<PickupKind, string> = { health: '+', rapid: 'R', spread: 'S', damage: 'D', multishot: '↑', 'weapon-pulse': 'P', 'weapon-lance': 'L', 'weapon-scatter': 'W', 'ship-part': '◆' };
-const PICKUP_NAMES: Record<PickupKind, string> = { health: 'HULL REPAIRED +2', rapid: 'RAPID FIRE · 8 SECONDS', spread: 'SPREAD SHOT · 8 SECONDS', damage: 'OVERCHARGE · 8 SECONDS', multishot: 'MULTISHOT +1 · UNTIL SECTOR END', 'weapon-pulse': 'PULSE CANNONS EQUIPPED', 'weapon-lance': 'PIERCING LANCE EQUIPPED', 'weapon-scatter': 'SCATTER CANNON EQUIPPED', 'ship-part': 'MANTA BLUEPRINT RECOVERED' };
-const WEAPON_PROJECTILES: Record<WeaponKind, number> = { pulse: 2, lance: 1, scatter: 3 };
+const PICKUP_COLORS: Record<PickupKind, number> = { supercharge: 0xffea83, health: 0x7bffc6, rapid: 0xffc66c, spread: 0x9bf2ff, damage: 0xe4a0ff, multishot: 0x75f0ed, 'weapon-pulse': 0x9bf2ff, 'weapon-lance': 0xc4a0ff, 'weapon-scatter': 0xffb773, 'ship-part': 0xffdc89 };
+const PICKUP_LABELS: Record<PickupKind, string> = { supercharge: '★', health: '+', rapid: 'R', spread: 'S', damage: 'D', multishot: '↑', 'weapon-pulse': 'P', 'weapon-lance': 'L', 'weapon-scatter': 'W', 'ship-part': '◆' };
+const PICKUP_NAMES: Record<PickupKind, string> = { supercharge: 'SUPERCHARGE · MAX POWER · 6 SECONDS', health: 'HULL REPAIRED +2', rapid: 'RAPID FIRE · 8 SECONDS', spread: 'SPREAD SHOT · 8 SECONDS', damage: 'OVERCHARGE · 8 SECONDS', multishot: 'MULTISHOT +1 · UNTIL LEVEL END', 'weapon-pulse': 'PULSE CANNONS EQUIPPED', 'weapon-lance': 'PIERCING LANCE EQUIPPED', 'weapon-scatter': 'SCATTER CANNON EQUIPPED', 'ship-part': 'MANTA BLUEPRINT RECOVERED' };
 const WEAPON_CYCLE: WeaponKind[] = ['pulse', 'lance', 'scatter'];
 
 export class CombatScene extends Phaser.Scene {
@@ -26,13 +33,16 @@ export class CombatScene extends Phaser.Scene {
   private mode: 'menu' | 'combat' | 'paused' | 'dying' | 'ended' = 'menu';
   private ready = false;
   private pendingCheckpoint: Checkpoint | null = null;
-  private level: Level = LEVELS[0];
+  private level: Level = getLevel(1);
   private player!: Sprite;
   private engineLeft!: Sprite;
   private engineRight!: Sprite;
   private shield!: Phaser.GameObjects.Arc;
-  private field!: Phaser.GameObjects.Graphics;
+  private backdrop!: LevelBackdrop;
+  private visual = getLevelVisual(1);
+  private enemyVisuals?: EnemyVisualSet;
   private bossTelegraph!: Phaser.GameObjects.Graphics;
+  private guardianPortals: { x: number; y: number; radius: number; expiresAt: number }[] = [];
   private playerExplosion!: Phaser.GameObjects.Graphics;
   private deathElapsed = 0;
   private deathOrigin = { x: 240, y: 654 };
@@ -55,6 +65,8 @@ export class CombatScene extends Phaser.Scene {
   private elapsed = 0;
   private backdropTime = 0;
   private waveIndex = 0;
+  private completedWaves = 0;
+  private waveClearAt: number | null = null;
   private nextFire = 0;
   private nextHud = 0;
   private invulnerable = 0;
@@ -76,7 +88,6 @@ export class CombatScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.svg('space-background', '/art/background.svg', { width: 480, height: 800 });
     this.load.svg('strelka', SHIPS.strelka.art, { width: 100, height: 124 });
     this.load.svg('manta', SHIPS.manta.art, { width: 140, height: 110 });
     this.load.svg('enemy-straight', '/art/enemy-straight.svg', { width: 76, height: 84 });
@@ -88,18 +99,16 @@ export class CombatScene extends Phaser.Scene {
 
   create(): void {
     this.createTextures();
+    createProjectileTextures(this);
     this.cameras.main.setBackgroundColor('#100e23');
-    if (this.textures.exists('space-background')) this.add.image(240, 400, 'space-background').setDisplaySize(480, 800).setAlpha(0.8).setDepth(-10);
-    this.field = this.add.graphics().setDepth(-5);
-    this.field.lineStyle(1, 0x8e8ec4, 0.035);
-    for (let x = 0; x <= 480; x += 60) this.field.lineBetween(x, 0, x, 800);
-    for (let y = 0; y <= 800; y += 80) this.field.lineBetween(0, y, 480, y);
+    this.backdrop = new LevelBackdrop(this);
     for (let i = 0; i < 58; i++) {
       const x = (i * 137.507) % 480;
       const y = (i * 91.317) % 800;
       const star = this.add.image(x, y, 'spark').setDepth(-4).setScale(i % 6 === 0 ? 0.6 : 0.3).setTint(i % 3 === 0 ? 0xab9cd3 : 0xc2d6e1).setAlpha(0.15 + (i % 5) * 0.06);
       this.stars.push({ sprite: star, speed: 10 + (i % 4) * 8, phase: i });
     }
+    this.applyLevelVisual(1);
     this.bossTelegraph = this.add.graphics().setDepth(3);
     this.playerExplosion = this.add.graphics().setDepth(12);
     this.engineLeft = this.add.image(227, 682, 'engine').setDepth(5).setBlendMode(Phaser.BlendModes.ADD);
@@ -142,14 +151,15 @@ export class CombatScene extends Phaser.Scene {
 
   private createTextures(): void {
     const g = this.make.graphics({ x: 0, y: 0 });
-    g.fillStyle(0xc7ffff).fillRoundedRect(3, 0, 4, 26, 2).fillStyle(0x2fe2ed, 0.3).fillRoundedRect(0, 2, 10, 25, 4);
-    g.generateTexture('friendly-shot', 10, 28).clear();
-    g.fillStyle(0xff506d, 0.22).fillCircle(9, 9, 9).fillStyle(0xff506d).fillCircle(9, 9, 5).fillStyle(0xffd0b2).fillCircle(9, 9, 2.5);
-    g.generateTexture('hostile-shot', 18, 18).clear();
     g.fillStyle(0xffffff).fillCircle(4, 4, 3);
     g.generateTexture('spark', 8, 8).clear();
     g.lineStyle(2, 0xffffff).strokeCircle(24, 24, 20);
     g.generateTexture('ring', 48, 48).clear();
+    g.fillStyle(0x313440).fillPoints([{ x: 8, y: 19 }, { x: 23, y: 5 }, { x: 47, y: 9 }, { x: 59, y: 30 }, { x: 49, y: 54 }, { x: 25, y: 61 }, { x: 5, y: 44 }], true);
+    g.lineStyle(2, 0xdfb787).strokePoints([{ x: 8, y: 19 }, { x: 23, y: 5 }, { x: 47, y: 9 }, { x: 59, y: 30 }, { x: 49, y: 54 }, { x: 25, y: 61 }, { x: 5, y: 44 }], true);
+    g.fillStyle(0x121a27).fillCircle(24, 24, 7).fillCircle(42, 40, 9);
+    g.lineStyle(2, 0x85786c).lineBetween(9, 39, 23, 44).lineBetween(40, 12, 46, 24);
+    g.generateTexture('enemy-debris', 64, 64).clear();
     g.fillStyle(0x53e4ff, 0.12).fillTriangle(0, 0, 20, 0, 10, 60).fillStyle(0x6cf2ff, 0.6).fillTriangle(4, 0, 16, 0, 10, 40).fillStyle(0xdeffff).fillTriangle(7, 0, 13, 0, 10, 22);
     g.generateTexture('engine', 20, 60).destroy();
   }
@@ -157,7 +167,9 @@ export class CombatScene extends Phaser.Scene {
   public startRun(checkpoint: Checkpoint): void {
     if (!this.ready) { this.pendingCheckpoint = checkpoint; return; }
     this.clearRun();
-    this.level = LEVELS.find(level => level.id === checkpoint.level) ?? LEVELS[0];
+    const level = getLevel(checkpoint.level);
+    this.level = { ...level, waves: createLevelWaves(level) };
+    this.applyLevelVisual(this.level.id);
     this.runSerial++;
     this.shipId = checkpoint.shipId && SHIPS[checkpoint.shipId] ? checkpoint.shipId : 'strelka';
     this.loadout = checkpoint.loadout ?? defaultLoadout();
@@ -167,10 +179,12 @@ export class CombatScene extends Phaser.Scene {
     this.bossTotalHp = 0;
     this.salvageStarted = false;
     this.hp = clamp(checkpoint.hp, 1, this.stats.maxHp);
-    this.score = Math.max(0, checkpoint.score);
+    this.score = Number.isFinite(checkpoint.score) ? clamp(Math.floor(checkpoint.score), 0, MAX_SCORE) : 0;
     this.kills = 0;
     this.elapsed = 0;
     this.waveIndex = 0;
+    this.completedWaves = 0;
+    this.waveClearAt = null;
     this.nextFire = 0.4;
     this.nextHud = 0;
     this.invulnerable = 1.3;
@@ -185,7 +199,7 @@ export class CombatScene extends Phaser.Scene {
     this.engineRight.setVisible(true);
     this.mode = 'combat';
     this.emitHud();
-    this.callbacks.onNotice(`SECTOR ${String(this.level.id).padStart(2, '0')} · ${this.level.name.toUpperCase()}`);
+    this.callbacks.onNotice(`LEVEL ${String(this.level.id).padStart(2, '0')} · ${this.level.name.toUpperCase()}`);
   }
 
   public pauseCombat(): void {
@@ -214,27 +228,29 @@ export class CombatScene extends Phaser.Scene {
 
   public setShipParts(parts: number): void { this.shipParts = clamp(Math.floor(parts), 0, SHIP_PARTS_REQUIRED); }
 
-  public setPreferences(preferences: Preferences): void { this.preferences = { ...preferences }; }
+  public setPreferences(preferences: Preferences): void {
+    this.preferences = { ...preferences };
+    // Settings can change while combat is paused: remove stale guides at once.
+    if (this.ready) this.drawBossTelegraph();
+  }
 
   update(_time: number, delta: number): void {
     const dt = Math.min(delta / 1000, 0.05);
     if (this.mode === 'dying') {
       this.deathElapsed += dt;
+      this.updateProjectiles(dt, false);
       this.updateEffects(dt);
       this.drawPlayerExplosion();
       if (this.deathElapsed >= DEATH_SECONDS) this.finish('defeat');
       return;
     }
-    if (this.mode === 'ended') { this.updateEffects(dt); return; }
+    if (this.mode === 'ended') { this.updateProjectiles(dt, false); this.updateEffects(dt); return; }
     if (this.mode !== 'combat') return;
     this.elapsed += dt;
     this.backdropTime += dt;
     this.updateBackdrop(dt);
     this.updatePlayer(dt);
-    while (this.waveIndex < this.level.waves.length && this.level.waves[this.waveIndex].at <= this.elapsed) {
-      this.spawnWave(this.level.waves[this.waveIndex], this.waveIndex);
-      this.waveIndex++;
-    }
+    this.updateWaveProgression();
     this.updateEnemies(dt);
     this.updateProjectiles(dt);
     if (this.mode !== 'combat') return;
@@ -249,26 +265,61 @@ export class CombatScene extends Phaser.Scene {
       this.emitHud();
     }
     if (this.waveIndex === this.level.waves.length && this.enemies.length === 0) {
-      if (this.level.boss && !this.bossSpawned) this.spawnBoss();
-      else if (!this.level.boss || this.bossDefeated) {
+      if (!this.level.boss || this.bossDefeated) {
         // Final salvage must reach the ship before an outcome can replace the playfield.
         if (!this.salvageStarted) {
           this.salvageStarted = true;
-          for (const bullet of this.bullets) bullet.sprite.destroy();
-          this.bullets.length = 0;
-          if (this.pickups.length) this.callbacks.onNotice('SECTOR SECURE · RECOVERING SALVAGE');
+          if (this.bullets.some(bullet => bullet.hostile)) this.callbacks.onNotice('GUARDIAN DOWN · EVADE THE LAST SHOTS');
+          else if (this.pickups.length) this.callbacks.onNotice('LEVEL SECURE · RECOVERING SALVAGE');
         }
-        if (this.pickups.length === 0) this.finish('complete');
+        if (this.pickups.length === 0 && !this.bullets.some(bullet => bullet.hostile)) this.finish('complete');
       }
     }
+  }
+
+  private updateWaveProgression(): void {
+    if (this.enemies.length || this.bossSpawned) return;
+    if (this.waveIndex > this.completedWaves) {
+      this.completedWaves = this.waveIndex;
+      this.waveClearAt = this.elapsed;
+      // Launched shots remain live across wave boundaries, even after their source dies.
+      this.callbacks.onNotice(`WAVE ${this.waveIndex} CLEAR · NEXT CONTACT INBOUND`);
+    }
+    if (this.waveClearAt !== null && this.elapsed - this.waveClearAt < 0.9) return;
+    if (this.waveIndex < this.level.waves.length) {
+      const wave = this.level.waves[this.waveIndex];
+      if (wave.at > this.elapsed) return;
+      this.spawnWave(wave, this.waveIndex);
+      this.waveIndex++;
+      this.waveClearAt = null;
+      this.emitHud();
+    } else if (this.level.boss) this.spawnBoss();
   }
 
   private updateBackdrop(dt: number): void {
     if (this.preferences.reducedMotion) return;
     for (const star of this.stars) {
-      star.sprite.y += star.speed * dt;
+      star.sprite.x += Math.sin(this.visual.flowAngle) * star.speed * this.visual.starSpeed * dt;
+      star.sprite.y += Math.cos(this.visual.flowAngle) * star.speed * this.visual.starSpeed * dt;
       if (star.sprite.y > 804) star.sprite.y = -4;
+      if (star.sprite.y < -4) star.sprite.y = 804;
+      if (star.sprite.x > 484) star.sprite.x = -4;
+      if (star.sprite.x < -4) star.sprite.x = 484;
     }
+  }
+
+  private applyLevelVisual(level: number): void {
+    if (this.enemyVisuals && this.visual.level === level) return;
+    // startRun has already destroyed old enemies before their textures retire.
+    this.enemyVisuals?.dispose();
+    this.visual = getLevelVisual(level);
+    this.enemyVisuals = createEnemyVisuals(this, this.visual);
+    this.backdrop.apply(this.visual);
+    this.stars.forEach((star, i) => {
+      star.sprite.setTint(i % 4 ? this.visual.palette.light : this.visual.palette.accent);
+      star.sprite.setPosition((i * 137.507 + this.visual.seed % 480) % 480, (i * 91.317 + this.visual.seed % 800) % 800);
+      star.sprite.setAlpha(0.12 + i % 5 * 0.05);
+    });
   }
 
   private updatePlayer(dt: number): void {
@@ -291,13 +342,13 @@ export class CombatScene extends Phaser.Scene {
     const pulse = this.preferences.reducedMotion ? 1 : 0.93 + Math.sin(this.elapsed * 37) * 0.12;
     this.engineLeft.setPosition(this.player.x - (this.shipId === 'manta' ? 29 : 13), this.player.y + (this.shipId === 'manta' ? 30 : 48)).setScale(0.65, 0.65 * pulse).setAlpha(0.65);
     this.engineRight.setPosition(this.player.x + (this.shipId === 'manta' ? 29 : 13), this.player.y + (this.shipId === 'manta' ? 30 : 48)).setScale(0.65, 0.65 * pulse).setAlpha(0.65);
-    for (const kind of ['rapid', 'spread', 'damage'] as PickupKind[]) {
+    for (const kind of ['rapid', 'spread', 'damage', 'supercharge'] as PickupKind[]) {
       if (this.buffs[kind] && this.buffs[kind]! <= this.elapsed) delete this.buffs[kind];
     }
     if (this.elapsed >= this.nextFire && !this.salvageStarted) {
       const cycle = this.weapon === 'lance' ? 1.55 : this.weapon === 'scatter' ? 1.15 : 1;
       this.nextFire = this.elapsed + this.stats.fireInterval * cycle * (this.buffs.rapid ? 0.5 : 1);
-      const damage = this.stats.damage * (this.buffs.damage ? 2 : 1) * (this.weapon === 'lance' ? 2.5 : this.weapon === 'scatter' ? 0.88 : 1);
+      const damage = this.stats.damage * getProjectileDamageMultiplier(this.effectiveWeaponPower(), Boolean(this.buffs.spread)) * (this.buffs.damage ? 2 : 1) * cycle;
       const count = this.projectileCount();
       const step = this.weapon === 'scatter' ? 0.16 : this.weapon === 'lance' ? 0.085 : 0.075;
       const width = Math.min(1.25, Math.max(0, count - 1) * step);
@@ -314,8 +365,12 @@ export class CombatScene extends Phaser.Scene {
     }
   }
 
+  private effectiveWeaponPower(): number {
+    return getEffectiveWeaponPower(this.multishot, (this.buffs.supercharge ?? 0) > this.elapsed);
+  }
+
   private projectileCount(): number {
-    return WEAPON_PROJECTILES[this.weapon] + this.multishot + (this.buffs.spread ? 2 : 0);
+    return getProjectileCount(this.effectiveWeaponPower(), Boolean(this.buffs.spread));
   }
 
   private formationTarget(wave: Wave, index: number): { x: number; y: number } {
@@ -334,10 +389,12 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private spawnWave(wave: Wave, waveIndex: number): void {
-    if (!this.bossSpawned) this.callbacks.onNotice(`${wave.tier === 2 ? 'ELITE ' : wave.tier === 1 ? 'VETERAN ' : ''}${wave.formation.toUpperCase()} · ${waveIndex + 1}/${this.level.waves.length}`);
-    const count = Math.min(wave.count, LIMITS.enemies - this.enemies.length);
-    const tier = wave.tier ?? 0;
-    const tint = tier >= 2 ? 0xff97cc : tier === 1 ? 0xffd08a : 0xffffff;
+    const debris = wave.kind === 'debris';
+    if (!this.bossSpawned) this.callbacks.onNotice(debris ? 'ASTEROIDS · WATCH THE ANGLES · DODGE & DESTROY' : `${wave.tier === 2 ? 'ELITE ' : wave.tier === 1 ? 'VETERAN ' : ''}${wave.formation.toUpperCase()} · WEAK TO ${getWeaponWeakness(wave.kind).toUpperCase()} · ${waveIndex + 1}/${this.level.waves.length + (this.level.boss ? 1 : 0)}`);
+    // Scheduled waves only start on an empty field. Never truncate their hulls or rewards.
+    const count = wave.count;
+    const tier = debris ? 0 : wave.tier ?? 0;
+    const tint = 0xffffff; // Hull paint is authored into each level's fleet textures.
     let drop = wave.drop;
     if (drop?.startsWith('weapon-')) {
       const available = WEAPON_CYCLE.filter(kind => kind !== this.weapon);
@@ -345,13 +402,22 @@ export class CombatScene extends Phaser.Scene {
     } else if (drop === 'rapid' || drop === 'spread' || drop === 'damage') {
       if (Math.random() >= 0.4) drop = undefined;
     }
+    const specialCarrier = Math.floor(count / 2);
+    const arrayCarriers = new Set<number>();
+    const arrays = clamp(Math.floor(wave.powerUpDrops ?? 0), 0, Math.max(0, count - (drop ? 1 : 0)));
+    for (let i = 0; i < arrays; i++) {
+      let carrier = Math.floor((i + 0.5) / arrays * count);
+      while ((drop && carrier === specialCarrier) || arrayCarriers.has(carrier)) carrier = (carrier + 1) % count;
+      arrayCarriers.add(carrier);
+    }
     for (let i = 0; i < count; i++) {
       const target = this.formationTarget(wave, i);
       const side = i % 2 === 0 ? -1 : 1;
-      const sx = wave.formation === 'pincer' || wave.formation === 'arc' ? 240 + side * 330 : target.x - side * 95;
-      const sy = -80 - i * 22;
-      const sprite = this.add.image(sx, sy, `enemy-${wave.kind}`).setDepth(5).setDisplaySize((wave.kind === 'shooter' ? 59 : 51) * (1 + tier * 0.09), (wave.kind === 'shooter' ? 62 : 57) * (1 + tier * 0.09)).setTint(tint);
-      this.enemies.push({ sprite, x: sx, y: sy, px: sx, py: sy, sx, sy, tx: target.x, ty: target.y, age: -i * 0.045, entry: 1.65 - tier * 0.12 + (i % 3) * 0.15, hold: wave.hold + i * 0.15, dive: false, vx: 0, vy: 0, hp: wave.hp, maxHp: wave.hp, radius: (wave.kind === 'shooter' ? 20 : 17) * (1 + tier * 0.09), kind: wave.kind, phase: i * 0.9 + waveIndex * 2, shotAt: 2.4 + i * 0.2, flash: 0, speed: wave.speed, drop: i === Math.floor(count / 2) ? drop : undefined, boss: false, bossPhase: 0, attackAt: 0, telegraph: 0, attackAngle: 0, tier, tint });
+      const trajectory = debris ? createAsteroidTrajectory(i + waveIndex, 0, wave.speed) : undefined;
+      const sx = trajectory?.sx ?? (wave.formation === 'pincer' || wave.formation === 'arc' ? 240 + side * 330 : target.x - side * 95);
+      const sy = trajectory?.sy ?? -80 - i * 22;
+      const sprite = this.add.image(sx, sy, this.enemyVisuals!.enemies[wave.kind]).setDepth(5).setDisplaySize((debris ? 64 : wave.kind === 'shooter' ? 59 : 51) * (1 + tier * 0.09), (debris ? 64 : wave.kind === 'shooter' ? 62 : 57) * (1 + tier * 0.09)).setTint(tint);
+      this.enemies.push({ sprite, x: sx, y: sy, px: sx, py: sy, sx, sy, tx: trajectory?.tx ?? target.x, ty: trajectory?.ty ?? target.y, age: debris ? -GAME_CONFIG.asteroids.warningSeconds - i * GAME_CONFIG.asteroids.staggerSeconds : -i * 0.045, entry: debris ? 0 : 1.65 - tier * 0.12 + (i % 3) * 0.15, hold: debris ? 0 : wave.hold + i * 0.15, dive: debris, vx: trajectory?.vx ?? 0, vy: trajectory?.vy ?? 0, hp: wave.hp, maxHp: wave.hp, radius: (debris ? 25 : wave.kind === 'shooter' ? 20 : 17) * (1 + tier * 0.09), kind: wave.kind, phase: i * 0.9 + waveIndex * 2, shotAt: 2.4 + i * 0.2, flash: 0, speed: wave.speed, drop: arrayCarriers.has(i) ? 'multishot' : i === specialCarrier ? drop : undefined, boss: false, bossPhase: 0, attackAt: 0, telegraph: 0, attackAngle: 0, tier, tint, returns: 0, asteroidIndex: debris ? i + waveIndex : undefined, returnPattern: debris ? 'asteroid-crossing' : wave.kind === 'weaver' ? 'slalom' : wave.kind === 'shooter' ? 'crossing' : 'hook' });
     }
   }
 
@@ -359,12 +425,12 @@ export class CombatScene extends Phaser.Scene {
     const boss = this.level.boss!;
     const count = boss.count ?? 1;
     const kind = boss.kind ?? 'koschei';
-    const tint = kind === 'warden' ? 0xffc485 : kind === 'twins' ? 0x9be8ff : kind === 'carrier' ? 0xb0ffca : kind === 'lattice' ? 0xe9a3ff : 0xffffff;
+    const tint = 0xffffff;
     for (let i = 0; i < count; i++) {
       const x = count === 1 ? 240 : 132 + i * 216;
       const size = count > 1 ? 0.66 : kind === 'warden' ? 0.8 : 1;
-      const sprite = this.add.image(x, -130, kind === 'koschei' ? 'boss' : `boss-${kind}`).setDepth(5).setDisplaySize((kind === 'lattice' ? 185 : kind === 'twins' ? 190 : 225) * size, (kind === 'lattice' ? 185 : 169) * size).setTint(tint);
-      this.enemies.push({ sprite, x, y: -130, px: x, py: -130, sx: x, sy: -130, tx: x, ty: 143 + i * 45, age: 0, entry: 2.7, hold: 1e6, dive: false, vx: 0, vy: 0, hp: boss.hp, maxHp: boss.hp, radius: 66 * size, kind: 'shooter', phase: i, shotAt: 6.5 + i, flash: 0, speed: 0, boss: true, bossKind: kind, bossPhase: 1, attackAt: 4.5 + i * 0.9, telegraph: 0, attackAngle: Math.PI / 2, tier: 0, tint });
+      const sprite = this.add.image(x, -130, this.enemyVisuals!.bosses[kind]).setDepth(5).setDisplaySize((kind === 'lattice' ? 185 : kind === 'twins' ? 190 : 225) * size, (kind === 'lattice' ? 185 : 169) * size).setTint(tint);
+      this.enemies.push({ sprite, x, y: -130, px: x, py: -130, sx: x, sy: -130, tx: x, ty: 143 + i * 45, age: 0, entry: 2.7, hold: 1e6, dive: false, vx: 0, vy: 0, hp: boss.hp, maxHp: boss.hp, radius: 66 * size, kind: 'shooter', phase: i, shotAt: 6.5 + i, flash: 0, speed: 0, boss: true, bossKind: kind, bossPhase: 1, attackAt: 4.5 + i * 0.9, telegraph: 0, attackAngle: Math.PI / 2, tier: 0, tint, returns: 0, returnPattern: 'crossing' });
     }
     this.bossTotalHp = boss.hp * count;
     this.bossSpawned = true;
@@ -381,7 +447,13 @@ export class CombatScene extends Phaser.Scene {
       enemy.flash = Math.max(0, enemy.flash - dt);
       if (enemy.flash > 0) enemy.sprite.setTintFill(0xdbffff);
       else enemy.sprite.setTint(enemy.tint);
-      if (enemy.age < enemy.entry) {
+      enemy.sprite.setVisible(enemy.age >= 0);
+      if (enemy.age < 0) continue;
+      if (enemy.kind === 'debris') {
+        enemy.x += enemy.vx * dt;
+        enemy.y += enemy.vy * dt;
+        if (!this.preferences.reducedMotion) enemy.sprite.rotation += (Math.sin(enemy.phase) > 0 ? 1 : -1) * dt * 0.65;
+      } else if (enemy.age < enemy.entry) {
         const t = clamp(enemy.age / enemy.entry, 0, 1);
         const ease = 1 - (1 - t) ** 3;
         enemy.x = Phaser.Math.Linear(enemy.sx, enemy.tx, ease) + Math.sin(t * Math.PI) * Math.sin(enemy.phase) * 42;
@@ -394,37 +466,63 @@ export class CombatScene extends Phaser.Scene {
       } else {
         if (!enemy.dive) {
           enemy.dive = true;
-          const aim = aimedVelocity(enemy.x, enemy.y, clamp(this.player.x + Math.sin(enemy.phase) * 110, 20, 460), 840, enemy.speed);
+          // Return dives commit to an alternating lane instead of tracking the ship.
+          const targetX = enemy.returns ? (enemy.tx < 240 ? 390 : 90) : clamp(this.player.x + Math.sin(enemy.phase) * 110, 20, 460);
+          const aim = aimedVelocity(enemy.x, enemy.y, targetX, 840, enemy.speed);
           enemy.vx = aim.x;
           enemy.vy = Math.max(enemy.speed * 0.7, aim.y);
         }
         enemy.x += (enemy.vx + (enemy.kind === 'weaver' ? Math.cos((enemy.age - enemy.entry - enemy.hold) * 3.9 + enemy.phase) * 108 : 0)) * dt;
         enemy.y += enemy.vy * dt;
       }
-      if (!enemy.boss && (enemy.kind === 'shooter' || enemy.tier > 0) && enemy.y > 40 && enemy.y < 615) {
+      if (!enemy.boss && enemy.kind !== 'debris' && (enemy.kind === 'shooter' || enemy.tier > 0) && enemy.y > 40 && enemy.y < 615) {
         if (enemy.age >= enemy.shotAt - 0.45 && !enemy.telegraph) {
           enemy.telegraph = enemy.shotAt;
           enemy.attackAngle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x);
         }
         if (enemy.age >= enemy.shotAt) {
           enemy.shotAt = enemy.age + Math.max(1.05, 2.75 - this.level.id * 0.17 - enemy.tier * 0.22);
-          const speed = 165 + this.level.id * 13 + enemy.tier * 16;
+          const speed = boundedProjectileSpeed(this.level.id, enemy.tier);
           const count = enemy.kind === 'shooter' ? 1 + enemy.tier : enemy.tier === 2 ? 2 : 1;
           for (let shot = 0; shot < count; shot++) {
             const angle = enemy.attackAngle + (shot - (count - 1) / 2) * 0.19;
-            this.fireProjectile(enemy.x, enemy.y + 17, Math.cos(angle) * speed, Math.sin(angle) * speed, true, 1);
+            this.fireProjectile(enemy.x, enemy.y + 17, Math.cos(angle) * speed, Math.sin(angle) * speed, true, 1, 1, getEnemyShotShape(enemy.kind));
           }
           enemy.telegraph = 0;
           this.spark(enemy.x, enemy.y + 17, 0xff8291, 3, 60);
         }
       }
-      if (!enemy.boss) enemy.sprite.rotation = this.preferences.reducedMotion ? 0 : clamp((enemy.x - enemy.px) * 0.02, -0.22, 0.22);
+      if (!enemy.boss && enemy.kind !== 'debris') enemy.sprite.rotation = this.preferences.reducedMotion ? 0 : clamp((enemy.x - enemy.px) * 0.02, -0.22, 0.22);
       enemy.sprite.setPosition(enemy.x, enemy.y);
-      if (enemy.y > 875 || enemy.x < -200 || enemy.x > 680) {
-        enemy.sprite.destroy();
-        this.enemies.splice(i, 1);
-      }
+      if (!enemy.boss && enemy.dive && (enemy.y > 875 || enemy.y < -90 || enemy.x < -90 || enemy.x > 570)) this.returnEnemy(enemy);
     }
+  }
+
+  private returnEnemy(enemy: Enemy): void {
+    enemy.returns++;
+    const side = (Math.floor(enemy.phase) + enemy.returns) % 2 === 0 ? -1 : 1;
+    if (enemy.kind === 'debris') {
+      const trajectory = createAsteroidTrajectory(enemy.asteroidIndex ?? 0, enemy.returns, enemy.speed);
+      Object.assign(enemy, trajectory);
+      enemy.entry = 0;
+      enemy.hold = 0;
+      enemy.dive = true;
+    } else {
+      enemy.sx = enemy.kind === 'shooter' ? 240 + side * 300 : 240 + side * 168;
+      enemy.sy = enemy.kind === 'shooter' ? 125 : -70;
+      enemy.tx = 240 - side * (enemy.kind === 'weaver' ? 116 : 86);
+      enemy.ty = enemy.kind === 'shooter' ? 215 : 150;
+      enemy.entry = enemy.kind === 'shooter' ? 1.9 : 1.5;
+      enemy.hold = 0.9;
+      enemy.dive = false;
+    }
+    enemy.age = -(enemy.kind === 'debris' ? GAME_CONFIG.asteroids.warningSeconds : 0.95) - (Math.floor(enemy.phase) % 3) * 0.12;
+    enemy.x = enemy.px = enemy.sx;
+    enemy.y = enemy.py = enemy.sy;
+    if (enemy.kind !== 'debris') enemy.vx = enemy.vy = 0;
+    enemy.shotAt = enemy.entry + 1.15;
+    enemy.telegraph = 0;
+    enemy.sprite.setPosition(enemy.x, enemy.y).setVisible(false);
   }
 
   private updateBoss(enemy: Enemy, _dt: number): void {
@@ -438,134 +536,205 @@ export class CombatScene extends Phaser.Scene {
     enemy.x = enemy.tx + Math.sin((enemy.age - enemy.entry) * (paired ? 0.9 : 0.62) + (enemy.tx > 240 ? Math.PI : 0)) * (paired ? 69 : phase === 3 ? 132 : 105);
     enemy.y = enemy.ty + Math.sin(enemy.age * 0.8) * 17;
     if (enemy.bossKind === 'carrier' && enemy.age >= enemy.shotAt) {
-      enemy.shotAt = enemy.age + 8.5;
-      this.callbacks.onNotice('CARRIER BAY OPEN · INTERCEPT DRONES');
-      this.spawnWave({ at: 0, kind: phase === 3 ? 'weaver' : 'straight', formation: 'pincer', count: 2 + phase, hp: 3 + phase, speed: 160 + phase * 12, hold: 1, tier: 1 }, this.waveIndex);
+      if (this.enemies.length + 2 + phase <= LIMITS.enemies) {
+        enemy.shotAt = enemy.age + 8.5;
+        this.callbacks.onNotice('CARRIER BAY OPEN · INTERCEPT DRONES');
+        this.spawnWave({ at: 0, kind: phase === 3 ? 'weaver' : 'straight', formation: 'pincer', count: 2 + phase, hp: 3 + phase, speed: 160 + phase * 12, hold: 1, tier: 1 }, this.waveIndex);
+      } else enemy.shotAt = enemy.age + 1;
     }
-    if (enemy.age >= enemy.attackAt - 0.85 && enemy.telegraph === 0) {
-      enemy.telegraph = enemy.attackAt;
-      enemy.attackAngle = Math.atan2(this.player.y - enemy.y, this.player.x - enemy.x);
+    if (!enemy.attackPlan && enemy.age >= enemy.attackAt) {
+      enemy.attackPlan = createGuardianAttack({
+        kind: enemy.bossKind ?? 'koschei', phase, cycle: enemy.attackCycle ?? 0,
+        x: enemy.x, y: enemy.y + enemy.radius * 0.72,
+        playerX: this.player.x, playerY: this.player.y, side: enemy.tx < 240 ? -1 : 1,
+      });
+      enemy.telegraph = enemy.age + enemy.attackPlan.warningSeconds;
+      this.callbacks.onNotice(enemy.attackPlan.name.toUpperCase());
     }
-    if (enemy.age < enemy.attackAt) return;
-    const burst = Math.floor(enemy.phase++);
-    const kind = enemy.bossKind;
-    if (kind === 'lattice') {
-      // Alternating vertical lanes have a full lane-wide opening on each pulse.
-      const gap = burst % 5;
-      for (let lane = 0; lane < 5; lane++) {
-        if (lane === gap) continue;
-        const x = 64 + lane * 88;
-        this.fireProjectile(x, enemy.y + 30, 0, 185 + phase * 12, true, 1);
-        if (phase === 3) this.fireProjectile(x + 20, enemy.y + 30, 0, 185 + phase * 12, true, 1);
-      }
-      // An aimed pulse punishes sitting indefinitely outside the fixed lattice lanes.
-      if (burst % 2 === 0) {
-        const count = phase === 3 ? 3 : 1;
-        for (let shot = 0; shot < count; shot++) {
-          const angle = enemy.attackAngle + (shot - (count - 1) / 2) * 0.14;
-          this.fireProjectile(enemy.x, enemy.y + enemy.radius * 0.72, Math.cos(angle) * 228, Math.sin(angle) * 228, true, 1);
-        }
-      }
-    } else {
-      const count = kind === 'twins' ? 2 + phase : kind === 'warden' ? 3 + phase * 2 : kind === 'carrier' ? 4 + phase : 5 + phase * 2;
-      for (let shot = 0; shot < count; shot++) {
-        const angle = enemy.attackAngle + (shot - (count - 1) / 2) * (kind === 'twins' ? 0.21 : 0.16);
-        const speed = (kind === 'warden' ? 165 : 182) + phase * 14;
-        this.fireProjectile(enemy.x, enemy.y + enemy.radius * 0.72, Math.cos(angle) * speed, Math.sin(angle) * speed, true, 1);
-      }
+    const plan = enemy.attackPlan;
+    if (!plan || enemy.age < enemy.telegraph) return;
+    for (const shot of plan.shots) {
+      this.fireProjectile(shot.x, shot.y, shot.vx, shot.vy, true, 1, 1,
+        (shot.shape as ProjectileShape) ?? getEnemyShotShape(enemy.bossKind ?? 'koschei'), shot);
     }
-    if (kind === 'koschei' && phase >= 2 && burst % 2 === 0) {
-      for (let shot = 0; shot < 11; shot++) {
-        const angle = 0.2 + shot / 10 * (Math.PI - 0.4) + Math.sin(burst) * 0.12;
-        this.fireProjectile(enemy.x, enemy.y + 40, Math.cos(angle) * 134, Math.sin(angle) * 134, true, 1);
-      }
-    }
+    for (const portal of plan.portals ?? []) this.guardianPortals.push({ ...portal, expiresAt: this.elapsed + 2.4 });
     this.spark(enemy.x, enemy.y + 45, 0xff506d, 8, 90);
-    enemy.attackAt = enemy.age + (kind === 'warden' ? 2.8 : paired ? 2.7 : 2.5) - phase * 0.24;
+    enemy.attackAt = enemy.age + plan.recoverySeconds;
+    enemy.attackCycle = (enemy.attackCycle ?? 0) + 1;
+    enemy.attackPlan = undefined;
     enemy.telegraph = 0;
   }
 
   private drawBossTelegraph(): void {
     this.bossTelegraph.clear();
+    this.guardianPortals = this.guardianPortals.filter(portal => portal.expiresAt > this.elapsed);
+    for (const portal of this.guardianPortals) this.drawPortal(portal, Math.min(1, (portal.expiresAt - this.elapsed) / 0.5));
+    // Black holes are part of the encounter itself. Predicted routes, impact
+    // zones and safe lanes belong exclusively to the optional aiming guides.
     for (const enemy of this.enemies) {
+      for (const portal of enemy.attackPlan?.portals ?? []) this.drawPortal(portal);
+    }
+    if (!this.preferences.trainingWheels) return;
+    for (const bullet of this.bullets) {
+      if (!bullet.trajectory?.burstAfter) continue;
+      const center = sampleGuardianShot(bullet.trajectory, bullet.trajectory.burstAfter);
+      this.bossTelegraph.lineStyle(1, 0xffb873, 0.4).strokeCircle(center.x, center.y, 80);
+      this.bossTelegraph.lineStyle(2, 0xffcc85, 0.8).strokeCircle(bullet.x, bullet.y, 11 + 12 * Math.max(0, bullet.trajectory.burstAfter - bullet.age));
+    }
+    for (const enemy of this.enemies) {
+      if (enemy.age < 0 && enemy.age >= -GAME_CONFIG.asteroids.warningSeconds && (enemy.returns > 0 || enemy.kind === 'debris')) {
+        const g = this.bossTelegraph;
+        const color = enemy.kind === 'debris' ? 0xffcc85 : 0x91e9ff;
+        let x = clamp(enemy.sx, 16, 464), y = clamp(enemy.sy, 24, 775);
+        if (enemy.kind === 'debris') {
+          const dx = enemy.tx - enemy.sx, dy = enemy.ty - enemy.sy;
+          const toEdge = enemy.sx < 0 ? (16 - enemy.sx) / dx : enemy.sx > 480 ? (464 - enemy.sx) / dx : (24 - enemy.sy) / dy;
+          x = enemy.sx + dx * toEdge;
+          y = enemy.sy + dy * toEdge;
+        }
+        g.lineStyle(2, color, 0.75).strokeCircle(x, y, 12);
+        g.lineStyle(1, color, 0.4);
+        if (enemy.kind === 'debris') {
+          // The warning uses the same committed vector as movement, including
+          // side entries. Thin borders show the entire collision corridor.
+          const length = Math.hypot(enemy.tx - enemy.sx, enemy.ty - enemy.sy);
+          const ux = (enemy.tx - enemy.sx) / length, uy = (enemy.ty - enemy.sy) / length;
+          const width = enemy.radius + 5;
+          const nx = -uy * width, ny = ux * width;
+          g.lineStyle(width * 2, color, 0.045).lineBetween(enemy.sx, enemy.sy, enemy.tx, enemy.ty);
+          g.lineStyle(1, color, 0.4)
+            .lineBetween(enemy.sx + nx, enemy.sy + ny, enemy.tx + nx, enemy.ty + ny)
+            .lineBetween(enemy.sx - nx, enemy.sy - ny, enemy.tx - nx, enemy.ty - ny);
+          for (const fraction of [0.25, 0.5, 0.75]) {
+            const ax = enemy.sx + ux * length * fraction, ay = enemy.sy + uy * length * fraction;
+            g.lineBetween(ax - ux * 13 - uy * 7, ay - uy * 13 + ux * 7, ax, ay)
+              .lineBetween(ax - ux * 13 + uy * 7, ay - uy * 13 - ux * 7, ax, ay);
+          }
+        } else {
+          // Same parametric curve as entry movement, so the warning predicts the route.
+          let previousX = enemy.sx, previousY = enemy.sy;
+          for (let step = 1; step <= 14; step++) {
+            const t = step / 14, ease = 1 - (1 - t) ** 3;
+            const nextX = Phaser.Math.Linear(enemy.sx, enemy.tx, ease) + Math.sin(t * Math.PI) * Math.sin(enemy.phase) * 42;
+            const nextY = Phaser.Math.Linear(enemy.sy, enemy.ty, ease);
+            g.lineBetween(previousX, previousY, nextX, nextY);
+            previousX = nextX; previousY = nextY;
+          }
+          g.strokeCircle(enemy.tx, enemy.ty, enemy.radius + 5);
+        }
+      }
+      if (enemy.attackPlan) {
+        this.drawGuardianPlan(enemy.attackPlan);
+        continue;
+      }
       if (!enemy.telegraph) continue;
       const timeLeft = enemy.telegraph - enemy.age;
       const alpha = this.preferences.reducedMotion ? 0.32 : 0.2 + Math.sin(timeLeft * 20) ** 2 * 0.15;
       this.bossTelegraph.lineStyle(1, enemy.boss ? 0xffc26c : 0xff738b, alpha);
-      if (enemy.bossKind === 'lattice') {
-        const gap = Math.floor(enemy.phase) % 5;
-        for (let lane = 0; lane < 5; lane++) {
-          if (lane === gap) continue;
-          const x = 64 + lane * 88;
-          this.bossTelegraph.lineBetween(x, enemy.y + 30, x, 800);
-          if (enemy.bossPhase === 3) this.bossTelegraph.lineBetween(x + 20, enemy.y + 30, x + 20, 800);
-        }
-        if (Math.floor(enemy.phase) % 2 === 0) {
-          this.bossTelegraph.lineStyle(2, 0xff738b, alpha + 0.1);
-          const originY = enemy.y + enemy.radius * 0.72;
-          for (const offset of enemy.bossPhase === 3 ? [-0.14, 0, 0.14] : [0]) {
-            const angle = enemy.attackAngle + offset;
-            this.bossTelegraph.lineBetween(enemy.x, originY, enemy.x + Math.cos(angle) * 900, originY + Math.sin(angle) * 900);
-          }
-        }
-      } else {
-        const spread = enemy.boss ? (enemy.bossKind === 'twins' ? 0.21 : 0.16) * ((enemy.bossKind === 'twins' ? 2 + enemy.bossPhase : enemy.bossKind === 'warden' ? 3 + enemy.bossPhase * 2 : enemy.bossKind === 'carrier' ? 4 + enemy.bossPhase : 5 + enemy.bossPhase * 2) - 1) / 2 : 0;
-        const offsets = enemy.boss ? [-spread, 0, spread] : [0];
-        const originY = enemy.y + (enemy.boss ? enemy.radius * 0.72 : 17);
-        for (const offset of offsets) {
-          const angle = enemy.attackAngle + offset;
-          this.bossTelegraph.lineBetween(enemy.x, originY, enemy.x + Math.cos(angle) * 900, originY + Math.sin(angle) * 900);
-        }
-      }
+      const originY = enemy.y + 17;
+      this.bossTelegraph.lineBetween(enemy.x, originY, enemy.x + Math.cos(enemy.attackAngle) * 900, originY + Math.sin(enemy.attackAngle) * 900);
       this.bossTelegraph.lineStyle(enemy.boss ? 2 : 1, 0xffbf75, 0.75).strokeCircle(enemy.x, enemy.y + (enemy.boss ? 40 : 17), (enemy.boss ? 10 : 4) + Math.max(0, timeLeft) * 12);
     }
   }
 
-  private fireProjectile(x: number, y: number, vx: number, vy: number, hostile: boolean, damage: number, pierce = 1): void {
+  private drawPortal(portal: { x: number; y: number; radius: number }, alpha = 1): void {
+    const g = this.bossTelegraph;
+    g.fillStyle(0x080612, alpha * 0.94).fillCircle(portal.x, portal.y, portal.radius);
+    g.lineStyle(6, 0x9369ff, alpha * 0.23).strokeEllipse(portal.x, portal.y, portal.radius * 2.7, portal.radius * 1.15);
+    g.lineStyle(2, 0xd4b2ff, alpha * 0.9).strokeCircle(portal.x, portal.y, portal.radius);
+    g.lineStyle(1, 0xffafdb, alpha * 0.55).strokeEllipse(portal.x, portal.y, portal.radius * 2.6, portal.radius * 0.95);
+  }
+
+  private drawGuardianPlan(plan: GuardianPlan): void {
+    const g = this.bossTelegraph;
+    const alpha = this.preferences.reducedMotion ? 0.35 : 0.25 + Math.sin(this.elapsed * 5) ** 2 * 0.1;
+    if (plan.safeLane) {
+      g.fillStyle(0x79e8c6, 0.035).fillRect(plan.safeLane.x - plan.safeLane.width / 2, 250, plan.safeLane.width, 550);
+      g.lineStyle(1, 0x79e8c6, 0.55).strokeRect(plan.safeLane.x - plan.safeLane.width / 2, 250, plan.safeLane.width, 550);
+    }
+    for (const shot of plan.shots) {
+      let previous = sampleGuardianShot(shot, 0);
+      g.lineStyle(1, 0xff9b9f, alpha);
+      const until = shot.burstAfter ?? Math.min(4.5, shot.lifetime ?? 7);
+      for (let t = 0.12; t <= until; t += 0.12) {
+        const next = sampleGuardianShot(shot, t);
+        g.lineBetween(previous.x, previous.y, next.x, next.y);
+        previous = next;
+      }
+      g.strokeCircle(shot.x, shot.y, 9);
+      if (shot.burstAfter) {
+        const center = sampleGuardianShot(shot, shot.burstAfter);
+        g.lineStyle(1, 0xffb873, 0.55).strokeCircle(center.x, center.y, 80);
+      }
+    }
+  }
+
+  private fireProjectile(x: number, y: number, vx: number, vy: number, hostile: boolean, damage: number, pierce = 1,
+    shape: ProjectileShape = hostile ? 'orb' : getPlayerShotShape(this.shipId, this.weapon), trajectory?: GuardianShot): void {
     let count = 0;
     for (const bullet of this.bullets) if (bullet.hostile === hostile) count++;
     if (count >= (hostile ? LIMITS.hostile : LIMITS.friendly)) return;
-    const sprite = this.add.image(x, y, hostile ? 'hostile-shot' : 'friendly-shot').setDepth(hostile ? 8 : 4);
-    if (!hostile) sprite.setRotation(Math.atan2(vy, vx) + Math.PI / 2).setTint(this.weapon === 'lance' ? 0xcba2ff : this.weapon === 'scatter' ? 0xffc27b : damage > 1 ? 0xdfa4ff : 0xffffff).setScale(pierce > 1 ? 1.5 : 1, pierce > 1 ? 1.8 : 1);
-    this.bullets.push({ sprite, x, y, px: x, py: y, vx, vy, radius: hostile ? 5 : 4, damage, age: 0, hostile, pierce, hitEnemies: new Set() });
+    const style = getProjectileStyle(shape);
+    const color = hostile ? shape === 'pincer' ? 0xff95cf : shape === 'mine' ? 0xffc176 : 0xff7c83
+      : this.weapon === 'lance' ? 0xcba2ff : this.weapon === 'scatter' ? 0xffc27b : 0x9bf2ff;
+    const sprite = this.add.image(x, y, style.texture).setDepth(hostile ? 8 : 4)
+      .setDisplaySize(style.width, style.height).setTint(color);
+    if (style.rotates) sprite.setRotation(Math.atan2(vy, vx) + Math.PI / 2);
+    this.bullets.push({ sprite, x, y, px: x, py: y, vx, vy, radius: hostile ? trajectory?.radius ?? style.radius : 4,
+      damage, weapon: this.weapon, age: 0, hostile, pierce, hitEnemies: new Set(), shape,
+      trajectory: trajectory ? { ...trajectory } : undefined, lifetime: trajectory?.lifetime ?? 9 });
   }
 
-  private updateProjectiles(dt: number): void {
+  private updateProjectiles(dt: number, collisions = true): void {
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const bullet = this.bullets[i];
       bullet.px = bullet.x;
       bullet.py = bullet.y;
-      bullet.x += bullet.vx * dt;
-      bullet.y += bullet.vy * dt;
       bullet.age += dt;
+      if (bullet.trajectory) {
+        Object.assign(bullet, sampleGuardianShot(bullet.trajectory, bullet.age));
+      } else {
+        bullet.x += bullet.vx * dt;
+        bullet.y += bullet.vy * dt;
+      }
       bullet.sprite.setPosition(bullet.x, bullet.y);
-      let consumed = bullet.x < -40 || bullet.x > 520 || bullet.y < -50 || bullet.y > 850 || bullet.age > 9;
-      if (!consumed && bullet.hostile) {
+      if (getProjectileStyle(bullet.shape).rotates) bullet.sprite.setRotation(Math.atan2(bullet.vy, bullet.vx) + Math.PI / 2);
+      let consumed = bullet.x < -40 || bullet.x > 520 || bullet.y < -50 || bullet.y > 850 || bullet.age > bullet.lifetime;
+      if (!consumed && bullet.trajectory?.burstAfter && bullet.age >= bullet.trajectory.burstAfter) {
+        consumed = true;
+        for (let shard = 0; shard < 8; shard++) {
+          const angle = shard / 8 * Math.PI * 2 + Math.PI / 8;
+          this.fireProjectile(bullet.x, bullet.y, Math.cos(angle) * 165, Math.sin(angle) * 165, true, 1, 1, 'shard');
+        }
+        this.spark(bullet.x, bullet.y, 0xffc176, 6, 60);
+      }
+      if (!consumed && collisions && bullet.hostile) {
         if (this.invulnerable <= 0 && segmentCircleHit(bullet.px - this.playerPrev.x, bullet.py - this.playerPrev.y, bullet.x - this.player.x, bullet.y - this.player.y, 0, 0, 13 + bullet.radius)) {
           consumed = true;
           this.damagePlayer();
-          if (this.mode !== 'combat') return;
+          if (this.mode !== 'combat') { bullet.sprite.destroy(); this.bullets.splice(i, 1); return; }
         }
-      } else if (!consumed) {
+      } else if (!consumed && collisions) {
         for (let e = this.enemies.length - 1; e >= 0; e--) {
           const enemy = this.enemies[e];
-          if (bullet.hitEnemies.has(enemy) || enemy.y < -25 || !segmentCircleHit(bullet.px - enemy.px, bullet.py - enemy.py, bullet.x - enemy.x, bullet.y - enemy.y, 0, 0, enemy.radius + bullet.radius)) continue;
+          if (bullet.hitEnemies.has(enemy) || enemy.age < 0 || enemy.y < -25 || !segmentCircleHit(bullet.px - enemy.px, bullet.py - enemy.py, bullet.x - enemy.x, bullet.y - enemy.y, 0, 0, enemy.radius + bullet.radius)) continue;
           bullet.hitEnemies.add(enemy);
           consumed = --bullet.pierce <= 0;
-          enemy.hp -= bullet.damage;
+          const effectiveness = getDamageMultiplier(enemy.bossKind ?? enemy.kind, bullet.weapon);
+          enemy.hp -= bullet.damage * effectiveness;
           enemy.flash = 0.06;
-          this.spark(bullet.x, bullet.y, bullet.damage > 1 ? 0xe4a0ff : 0x9ef6ff, 2, 68);
+          this.spark(bullet.x, bullet.y, effectiveness > 1 ? 0xffdc89 : 0x9ef6ff, effectiveness > 1 ? 5 : 2, 68);
           if (enemy.hp <= 0) this.destroyEnemy(e);
           if (consumed) break;
         }
       }
       if (consumed) { bullet.sprite.destroy(); this.bullets.splice(i, 1); }
     }
-    if (this.invulnerable <= 0) {
+    if (collisions && this.invulnerable <= 0) {
       for (let i = this.enemies.length - 1; i >= 0; i--) {
         const enemy = this.enemies[i];
+        if (enemy.age < 0) continue;
         if (!segmentCircleHit(enemy.px - this.playerPrev.x, enemy.py - this.playerPrev.y, enemy.x - this.player.x, enemy.y - this.player.y, 0, 0, enemy.radius + 12)) continue;
-        if (!enemy.boss) this.destroyEnemy(i);
         this.damagePlayer();
         break;
       }
@@ -573,7 +742,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private damagePlayer(): void {
-    if (this.invulnerable > 0 || this.mode !== 'combat' || (this.bossDefeated && this.enemies.length === 0)) return;
+    if (this.invulnerable > 0 || this.mode !== 'combat') return;
     this.hp = Math.max(0, this.hp - 1);
     this.invulnerable = this.stats.hitRecovery;
     this.callbacks.onSound('hit');
@@ -629,8 +798,8 @@ export class CombatScene extends Phaser.Scene {
   private destroyEnemy(index: number): void {
     const enemy = this.enemies[index];
     this.kills++;
-    this.score += enemy.boss ? 5000 : enemy.kind === 'shooter' ? 180 : enemy.kind === 'weaver' ? 140 : 100;
-    this.explode(enemy.x, enemy.y, enemy.boss ? 0xffdf92 : 0xff8375, enemy.boss);
+    this.score = Math.min(MAX_SCORE, this.score + (enemy.boss ? 5000 : enemy.kind === 'debris' ? 75 : enemy.kind === 'shooter' ? 180 : enemy.kind === 'weaver' ? 140 : 100));
+    this.explode(enemy.x, enemy.y, enemy.boss ? 0xffdf92 : enemy.kind === 'debris' ? 0xd6b38a : 0xff8375, enemy.boss);
     this.callbacks.onSound('explosion');
     if (enemy.drop) this.spawnPickup(enemy.x, enemy.y, enemy.drop);
 
@@ -649,6 +818,11 @@ export class CombatScene extends Phaser.Scene {
     const inner = this.add.rectangle(0, 0, 20, 20, color, 0.07).setRotation(Math.PI / 4);
     const text = this.add.text(0, 0, PICKUP_LABELS[kind], { fontFamily: 'monospace', fontSize: '19px', fontStyle: 'bold', color: '#' + color.toString(16).padStart(6, '0') }).setOrigin(0.5, 0.48);
     const sprite = this.add.container(x, y, [ring, inner, text]).setDepth(9);
+    if (kind === 'supercharge') {
+      ring.setSize(34, 34).setStrokeStyle(3, color);
+      inner.setSize(25, 25);
+      text.setFontSize(25);
+    }
     this.pickups.push({ sprite, x, y, px: x, py: y, age: 0, kind, phase: this.elapsed * 3 });
   }
 
@@ -680,17 +854,17 @@ export class CombatScene extends Phaser.Scene {
 
   private applyPickup(kind: PickupKind): void {
     if (kind === 'health') this.hp = Math.min(this.stats.maxHp, this.hp + 2);
-    else if (kind === 'multishot') this.multishot++;
+    else if (kind === 'multishot') this.multishot = addWeaponPower(this.multishot);
     else if (kind === 'ship-part') {
       if (this.shipParts >= SHIP_PARTS_REQUIRED) return;
       this.shipParts++;
       this.callbacks.onShipPart();
     } else if (kind.startsWith('weapon-')) this.weapon = kind.slice(7) as WeaponKind;
-    else this.buffs[kind] = this.elapsed + BUFF_SECONDS;
-    this.score += 25;
+    else this.buffs[kind] = this.elapsed + (kind === 'supercharge' ? GAME_CONFIG.pickups.supercharge.durationSeconds : BUFF_SECONDS);
+    this.score = Math.min(MAX_SCORE, this.score + 25);
     this.callbacks.onSound('pickup');
     // The persistence callback owns fragment progress and the unlock announcement.
-    if (kind !== 'ship-part') this.callbacks.onNotice(kind === 'multishot' ? `MULTISHOT +${this.multishot} · ${this.projectileCount()} PROJECTILES` : PICKUP_NAMES[kind]);
+    if (kind !== 'ship-part') this.callbacks.onNotice(kind === 'multishot' ? `WEAPON POWER ${this.multishot}/${MAX_WEAPON_POWER}${this.multishot === MAX_WEAPON_POWER ? ' · MAX' : ''} · ${this.projectileCount()} SHOTS · ${getWeaponPower(this.multishot).damageMultiplier.toFixed(2)}× BLAST` : PICKUP_NAMES[kind]);
     this.emitHud();
   }
 
@@ -735,9 +909,11 @@ export class CombatScene extends Phaser.Scene {
     const state: HudState = {
       level: this.level.id, score: this.score, hp: this.hp, maxHp: this.stats.maxHp,
       shipId: this.shipId, weapon: this.weapon, multishot: this.multishot, projectiles: this.projectileCount(),
+      weaponPower: this.multishot, effectiveWeaponPower: this.effectiveWeaponPower(), blastMultiplier: getProjectileDamageMultiplier(this.effectiveWeaponPower(), Boolean(this.buffs.spread)), shipParts: this.shipParts,
       buffs: Object.fromEntries(Object.entries(this.buffs).map(([kind, expiry]) => [kind, Math.max(0, expiry! - this.elapsed)])),
       progress: this.bossSpawned ? 0.75 + (1 - bossHp / Math.max(1, this.bossTotalHp)) * 0.25 : Math.min(0.74, this.waveIndex / Math.max(1, this.level.waves.length) * 0.74),
       wave: this.waveIndex + (this.bossSpawned ? 1 : 0), totalWaves: this.level.waves.length + (this.level.boss ? 1 : 0),
+      waveKind: this.bossSpawned ? 'guardian' : this.level.waves[Math.max(0, this.waveIndex - 1)]?.kind === 'debris' ? 'debris' : 'combat',
       ...(bosses.length ? { bossHp, bossMaxHp: this.bossTotalHp, bossName: this.level.boss?.name } : {}),
     };
     this.callbacks.onHud(state);
@@ -750,9 +926,7 @@ export class CombatScene extends Phaser.Scene {
     this.pointerAnchor = null;
     this.input.keyboard?.resetKeys();
     if (type === 'complete') {
-      this.score += 500 + this.hp * 100;
-      for (const bullet of this.bullets) bullet.sprite.destroy();
-      this.bullets.length = 0;
+      this.score = Math.min(MAX_SCORE, this.score + 500 + this.hp * 100);
       this.bossTelegraph.clear();
     }
     this.emitHud();
@@ -766,6 +940,7 @@ export class CombatScene extends Phaser.Scene {
       array.length = 0;
     }
     this.bossTelegraph?.clear();
+    this.guardianPortals.length = 0;
     this.playerExplosion?.clear();
     this.deathElapsed = 0;
     this.pointerAnchor = null;
@@ -773,12 +948,59 @@ export class CombatScene extends Phaser.Scene {
   }
 
   public getDebugState(): object {
-    return { mode: this.mode, deathElapsed: this.deathElapsed, deathExplosion: this.mode === 'dying', level: this.level.id, hp: this.hp, maxHp: this.stats.maxHp, shipId: this.shipId, loadout: this.loadout, weapon: this.weapon, multishot: this.multishot, projectiles: this.projectileCount(), stats: this.stats, shipParts: this.shipParts, bossSpawned: this.bossSpawned, bossDefeated: this.bossDefeated, salvageStarted: this.salvageStarted, score: this.score, kills: this.kills, elapsed: this.elapsed, wave: this.waveIndex, totalWaves: this.level.waves.length, player: { x: this.player?.x, y: this.player?.y, visible: this.player?.visible }, invulnerable: this.invulnerable, buffs: { ...this.buffs }, enemies: this.enemies.map(enemy => ({ x: enemy.x, y: enemy.y, hp: enemy.hp, boss: enemy.boss, kind: enemy.kind, tier: enemy.tier, bossKind: enemy.bossKind, phase: enemy.bossPhase, telegraph: enemy.telegraph })), bullets: { friendly: this.bullets.filter(bullet => !bullet.hostile).length, hostile: this.bullets.filter(bullet => bullet.hostile).length }, pickups: this.pickups.map(pickup => ({ x: pickup.x, y: pickup.y, kind: pickup.kind })), effects: this.effects.length, limits: LIMITS, runSerial: this.runSerial };
+    return {
+      mode: this.mode, deathElapsed: this.deathElapsed, deathExplosion: this.mode === 'dying', trainingWheels: this.preferences.trainingWheels === true,
+      level: this.level.id, hp: this.hp, maxHp: this.stats.maxHp, shipId: this.shipId, loadout: this.loadout,
+      appearance: { ...this.visual, textures: this.enemyVisuals ? { ...this.enemyVisuals.enemies, ...this.enemyVisuals.bosses } : {} },
+      weapon: this.weapon, multishot: this.multishot, weaponPower: this.multishot, effectiveWeaponPower: this.effectiveWeaponPower(),
+      blastMultiplier: getProjectileDamageMultiplier(this.effectiveWeaponPower(), Boolean(this.buffs.spread)), projectiles: this.projectileCount(),
+      stats: this.stats, shipParts: this.shipParts, bossSpawned: this.bossSpawned, bossDefeated: this.bossDefeated,
+      salvageStarted: this.salvageStarted, score: this.score, kills: this.kills, elapsed: this.elapsed,
+      wave: this.waveIndex + (this.bossSpawned ? 1 : 0), completedWaves: this.completedWaves, waveClearAt: this.waveClearAt,
+      waveKind: this.bossSpawned ? 'guardian' : this.level.waves[Math.max(0, this.waveIndex - 1)]?.kind === 'debris' ? 'debris' : 'combat',
+      totalWaves: this.level.waves.length + (this.level.boss ? 1 : 0),
+      asteroidWaves: this.level.waves.filter(wave => wave.kind === 'debris').length,
+      waves: this.level.waves.map(wave => ({ kind: wave.kind, count: wave.count, powerUpDrops: wave.powerUpDrops ?? 0 })),
+      player: { x: this.player?.x, y: this.player?.y, visible: this.player?.visible }, invulnerable: this.invulnerable, buffs: { ...this.buffs },
+      enemies: this.enemies.map(enemy => ({ x: enemy.x, y: enemy.y, px: enemy.px, py: enemy.py, hp: enemy.hp, maxHp: enemy.maxHp,
+        sx: enemy.sx, sy: enemy.sy, tx: enemy.tx, ty: enemy.ty, vx: enemy.vx, vy: enemy.vy,
+        boss: enemy.boss, kind: enemy.kind, tier: enemy.tier, bossKind: enemy.bossKind, phase: enemy.bossPhase, attack: enemy.attackPlan?.name, attackCycle: enemy.attackCycle ?? 0, texture: enemy.sprite.texture.key,
+        telegraph: enemy.telegraph, drop: enemy.drop, age: enemy.age, dive: enemy.dive,
+        returns: enemy.returns, returning: enemy.returns > 0 && enemy.age < 0, returnPattern: enemy.returnPattern,
+        warningSeconds: Math.max(0, -enemy.age), weakness: getWeaponWeakness(enemy.bossKind ?? enemy.kind) })),
+      bullets: { friendly: this.bullets.filter(bullet => !bullet.hostile).length, hostile: this.bullets.filter(bullet => bullet.hostile).length },
+      friendlyShots: this.bullets.filter(bullet => !bullet.hostile).map(bullet => ({ x: bullet.x, y: bullet.y, weapon: bullet.weapon, damage: bullet.damage, pierce: bullet.pierce, shape: bullet.shape, texture: bullet.sprite.texture.key })),
+      hostileShots: this.bullets.filter(bullet => bullet.hostile).map(bullet => ({ x: bullet.x, y: bullet.y, vx: bullet.vx, vy: bullet.vy, age: bullet.age, shape: bullet.shape, texture: bullet.sprite.texture.key, burstAfter: bullet.trajectory?.burstAfter })),
+      guardianPortals: this.guardianPortals.map(portal => ({ ...portal })),
+      pickups: this.pickups.map(pickup => ({ x: pickup.x, y: pickup.y, kind: pickup.kind })), effects: this.effects.length, limits: LIMITS, runSerial: this.runSerial,
+    };
   }
 
   /** Development-only scenarios let browser tests exercise real update/collision paths. */
   public debug(action: string, payload: Record<string, unknown> = {}): void {
     if (!import.meta.env.DEV || !this.ready) return;
+    if (action === 'holdFire') this.nextFire = payload.enabled === false ? this.elapsed : Infinity;
+    if (action === 'startWave') {
+      for (const array of [this.enemies, this.bullets, this.pickups]) {
+        for (const entity of array) entity.sprite.destroy();
+        array.length = 0;
+      }
+      const index = clamp(Math.floor(Number(payload.index) || 0), 0, this.level.waves.length - 1);
+      this.waveIndex = index + 1;
+      this.completedWaves = index;
+      this.waveClearAt = null;
+      this.bossSpawned = this.bossDefeated = this.salvageStarted = false;
+      this.elapsed = Math.max(this.elapsed, this.level.waves[index].at);
+      this.spawnWave(this.level.waves[index], index);
+      this.emitHud();
+    }
+    if (action === 'returnEnemy') {
+      const enemy = this.enemies[Number(payload.index) || 0];
+      if (enemy && !enemy.boss) this.returnEnemy(enemy);
+    }
+    if (action === 'clearWave') {
+      for (let i = this.enemies.length - 1; i >= 0; i--) this.destroyEnemy(i);
+    }
     if (action === 'pickup') this.spawnPickup(this.player.x, this.player.y, (payload.kind as PickupKind) || 'rapid');
     if (action === 'spawnPickup') this.spawnPickup(Number(payload.x) || 240, Number(payload.y) || 200, (payload.kind as PickupKind) || 'multishot');
     if (action === 'boss' && this.level.boss && !this.bossSpawned) {
@@ -810,6 +1032,8 @@ export class CombatScene extends Phaser.Scene {
         this.waveIndex++;
       }
       for (let i = this.enemies.length - 1; i >= 0; i--) this.destroyEnemy(i);
+      this.completedWaves = this.waveIndex;
+      this.waveClearAt = this.elapsed - 1;
     }
     if (action === 'enemy' || action === 'spawnEnemy') {
       this.spawnWave({ at: 0, kind: (payload.kind as EnemyKind) || 'straight', formation: 'line', count: 1, hp: Number(payload.hp) || 2, speed: 70, hold: 5 }, this.waveIndex);
@@ -825,7 +1049,7 @@ export class CombatScene extends Phaser.Scene {
       this.playerPrev = { x: this.player.x, y: this.player.y };
     }
     if (action === 'expireBuffs') {
-      for (const kind of ['rapid', 'spread', 'damage'] as PickupKind[]) if (this.buffs[kind]) this.buffs[kind] = this.elapsed;
+      for (const kind of ['rapid', 'spread', 'damage', 'supercharge'] as PickupKind[]) if (this.buffs[kind]) this.buffs[kind] = this.elapsed;
       this.updatePlayer(0);
       this.emitHud();
     }

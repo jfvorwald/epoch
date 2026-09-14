@@ -1,10 +1,37 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "jaq-epoch",
+  // Use `pnpm deploy`: the release helper merges ignored .private/staging.json.
+  // Public clones can build and test; staging deployment requires private setup.
+  "name": "jaq-epoch-staging",
   "compatibility_date": "2026-09-11",
-  "assets": { "directory": "./dist" },
-  "workers_dev": true,
+  "main": "./cloudflare/worker.js",
+  "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "vars": {
+    "BETA_ENABLED": "true",
+    "BETA_EMAIL_ENABLED": "true"
+  },
+  // Real staging resource IDs and restricted email bindings are private overrides.
+  "d1_databases": [],
+  "send_email": [],
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "workers_dev": false,
+  "preview_urls": false,
   "routes": [
-    { "pattern": "epoch.jaqstudios.com", "custom_domain": true }
-  ]
+    { "pattern": "epoch-staging.jaqstudios.com", "custom_domain": true }
+  ],
+  "env": {
+    "production": {
+      "name": "jaq-epoch",
+      "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+      "vars": { "BETA_ENABLED": "false", "BETA_EMAIL_ENABLED": "false" },
+      "d1_databases": [],
+      "send_email": [],
+      "triggers": { "crons": [] },
+      "workers_dev": true,
+      "preview_urls": true,
+      "routes": [
+        { "pattern": "epoch.jaqstudios.com", "custom_domain": true }
+      ]
+    }
+  }
 }

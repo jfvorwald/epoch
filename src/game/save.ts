@@ -1,10 +1,9 @@
-import { LEVELS } from '../data/levels';
+import { MAX_LEVEL_NUMBER, MAX_SCORE } from '../data/config';
 import { TRANSMISSIONS } from '../data/transmissions';
 import { defaultLoadout, isShipUnlocked, PLAYER_MAX_HP, SHIP_PARTS_REQUIRED } from '../data/ships';
 import type { Checkpoint, SaveData, ShipId, ShipLoadout } from './types';
 
 export const SAVE_KEY = 'epoch.browser.save.v1';
-const MAX_SCORE = 999_999_999;
 // Older v1 hull/loadout combinations allowed up to eight hits.
 const LEGACY_MAX_HP = 8;
 type SaveStorage = Pick<Storage, 'getItem' | 'setItem'>;
@@ -14,10 +13,10 @@ export function defaultSave(): SaveData {
   return {
     version: 1,
     bestScore: 0,
-    furthestSector: 1,
+    furthestLevel: 1,
     checkpoint: null,
     unlockedTransmissions: TRANSMISSIONS.filter((entry) => entry.afterLevel === 0).map((entry) => entry.id),
-    preferences: { music: true, sfx: true, reducedMotion: false },
+    preferences: { music: true, sfx: true, reducedMotion: false, trainingWheels: false },
     hangar: {
       selectedShip: 'strelka', parts: 0,
       loadouts: { strelka: defaultLoadout(), manta: defaultLoadout() },
@@ -66,7 +65,7 @@ function validCheckpoint(value: unknown, parts: number): Checkpoint | null {
   const shipId = validShipId(value.shipId, parts);
   const loadout = validLoadout(value.loadout);
   if (
-    typeof level !== 'number' || !Number.isInteger(level) || level < 1 || level > LEVELS.length ||
+    typeof level !== 'number' || !Number.isInteger(level) || level < 1 || level > MAX_LEVEL_NUMBER ||
     typeof score !== 'number' || !Number.isInteger(score) || score < 0 || score > MAX_SCORE ||
     typeof hp !== 'number' || !Number.isInteger(hp) || hp < 1 || hp > LEGACY_MAX_HP
   ) return null;
@@ -95,18 +94,26 @@ function normalizeSave(value: unknown): SaveData {
     boundedInteger(value.bestScore, 0, 0, MAX_SCORE),
     saved.checkpoint?.score ?? 0,
   );
-  saved.furthestSector = Math.max(
-    boundedInteger(value.furthestSector, 1, 1, LEVELS.length),
+  saved.furthestLevel = Math.max(
+    boundedInteger(value.furthestLevel ?? value.furthestSector, 1, 1, MAX_LEVEL_NUMBER),
     saved.checkpoint?.level ?? 1,
   );
 
   const unlocked = new Set(Array.isArray(value.unlockedTransmissions) ? value.unlockedTransmissions : []);
+  // The old five-level ending deleted its boundary. Carry those completed saves
+  // into chapter two without inventing a retained flight score or hull snapshot.
+  if (value.furthestLevel === undefined && typeof value.furthestSector === 'number' &&
+      value.furthestSector >= 5 && !saved.checkpoint && unlocked.has('open-channel')) {
+    const shipId = saved.hangar.selectedShip;
+    saved.checkpoint = { level: 6, score: 0, hp: PLAYER_MAX_HP, shipId, loadout: { ...saved.hangar.loadouts[shipId] } };
+    saved.furthestLevel = Math.max(6, saved.furthestLevel);
+  }
   saved.unlockedTransmissions = TRANSMISSIONS
-    .filter((entry) => entry.afterLevel === 0 || unlocked.has(entry.id))
+    .filter((entry) => entry.afterLevel === 0 || entry.afterLevel < saved.furthestLevel || unlocked.has(entry.id))
     .map((entry) => entry.id);
 
   if (isRecord(value.preferences)) {
-    for (const key of ['music', 'sfx', 'reducedMotion'] as const) {
+    for (const key of ['music', 'sfx', 'reducedMotion', 'trainingWheels'] as const) {
       if (typeof value.preferences[key] === 'boolean') saved.preferences[key] = value.preferences[key];
     }
   }
